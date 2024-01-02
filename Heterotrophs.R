@@ -304,7 +304,6 @@ tax_mino <- filter(tax, tax$Genus=="Minosira")
 tax <- filter(tax, tax$Supergroup!="Archaeplastida")
 tax <- filter(tax, tax$Division!="Haptophyta")
 tax <- filter(tax, tax$Division!="Ochrophyta")
-tax <- filter(tax, tax$Division!="Ciliophora")
 tax <- filter(tax, tax$Division!="Chlorophyta")
 tax <- filter(tax, tax$Division!="Rhodophyta")
 tax <- filter(tax, tax$Division!="Cryptophyta")
@@ -560,7 +559,7 @@ newdat$Treatment <- "AMB+HW"
 newdat_amb <- newdat
 
 ### FUT-HW
-m1 <- gam(LRR ~ s(time, k=4, fx= TRUE), data = hwf_m)
+m1 <- gam(LRR ~ s(time, k=5, fx= TRUE), data = hwf_m)
 m1$aic
 summary(m1)
 plot(m1, residuals = TRUE, pch = 19, cex = 0.75)
@@ -702,7 +701,7 @@ newdat$LLR_upr <- p2$fit + (1.96 * p2$se.fit)
 newdat$LLR_lwr <- p2$fit - (1.96 * p2$se.fit)
 newdat$Treatment <- "FUT"
 signi <- newdat
-signi <- subset(signi, time < 11.1)
+signi <- subset(signi, time < 12.1)
 signi <- subset(signi, time > 3.9)
 head(newdat)
 
@@ -1082,7 +1081,7 @@ species$Species <- sub("-2", "", species$Species)
 colnames(species)[2] <- "Group"
 
 ## Create color palette
-spe_pal <- qualpal(22, colorspace=list(h=c(0,360), s=c(0.3,1), l=c(0.2,0.8)))
+spe_pal <- qualpal(21, colorspace=list(h=c(0,360), s=c(0.3,1), l=c(0.2,0.8)))
 
 ## Plotting with and without legend
 species_plot <- ggplot(species, aes(fill = Group, x = time, y = Abundance)) +

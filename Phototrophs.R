@@ -291,6 +291,7 @@ tax <- filter(tax, tax$Supergroup!="Apusozoa")
 tax <- filter(tax, tax$Supergroup!="Amoebozoa")
 tax <- filter(tax, tax$Supergroup!="Rhizaria")
 tax <- filter(tax, tax$Division!="Choanoflagellida")
+tax <- filter(tax, tax$Division!="Ciliophora")
 tax <- filter(tax, tax$Division!="Pseudofungi")
 tax <- filter(tax, tax$Division!="Opalozoa")
 tax <- filter(tax, tax$Division!="Picozoa")
@@ -477,7 +478,7 @@ lines(upper ~ time, data = pdat, lty = "dashed")
 lines(lower ~ time, data = pdat, lty = "dashed")
 lines(unlist(m1.dsig$incr) ~ time, data = pdat, col = "blue", lwd = 3)
 lines(unlist(m1.dsig$decr) ~ time, data = pdat, col = "red", lwd = 3)
-# significant decrease from day 0 to 18
+# significant decrease from day 0 to 15
 
 ## Plot prettier for paper
 # Extract gam lines
@@ -489,7 +490,7 @@ newdat$LLR_upr <- p2$fit + (1.96 * p2$se.fit)
 newdat$LLR_lwr <- p2$fit - (1.96 * p2$se.fit)
 newdat$Treatment <- "FUT"
 signi <- newdat
-signi <- subset(signi, time < 18.1)
+signi <- subset(signi, time < 15.1)
 head(newdat)
 
 # plot
@@ -559,7 +560,7 @@ newdat_amb <- newdat
 signi_amb1 <- signi
 signi <- newdat
 signi <- subset(signi, time < 22.1)
-signi <- subset(signi, time > 19.9)
+signi <- subset(signi, time > 17.9)
 signi_amb2 <- signi
 
 ### FUT-HW
@@ -822,7 +823,7 @@ newdat$LLR_lwr <- p2$fit - (1.96 * p2$se.fit)
 newdat$Treatment <- "FUT+HW"
 signi <- newdat
 signi <- subset(signi, time < 27.1)
-signi <- subset(signi, time > 25.9)
+signi <- subset(signi, time > 24.9)
 newdat_fut_hw <- newdat
 signi_fut_hw <- signi
 
@@ -995,7 +996,7 @@ newdat_amb <- newdat
 signi_amb1 <- signi
 signi <- newdat
 signi <- subset(signi, time < 22.1)
-signi <- subset(signi, time > 19.9)
+signi <- subset(signi, time > 17.9)
 signi_amb2 <- signi
 
 ### FUT-HW
@@ -1101,7 +1102,7 @@ species <- species %>%
   mutate(Species = recode(Species, "Micromonas commoda_A2" = 'Micromonas commoda'))
 
 ## Create color palette
-spe_pal <- qualpal(35, colorspace=list(h=c(0,360), s=c(0.3,1), l=c(0.2,0.8)))
+spe_pal <- qualpal(30, colorspace=list(h=c(0,360), s=c(0.3,1), l=c(0.2,0.8)))
 
 ## Plotting with and without legend
 species_plot <- ggplot(species, aes(fill = Species, x = time, y = Abundance)) +
