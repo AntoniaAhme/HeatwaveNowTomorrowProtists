@@ -30,12 +30,12 @@ treat_pch <- c(16,17)
 bar.theme <- theme(panel.background = element_blank(),
                    panel.border = element_blank(),
                    panel.grid = element_blank(),
-                   axis.title.x=element_blank(),
-                   axis.text.x = element_text(size = 20, face= "bold"),
-                   axis.ticks.x=element_blank(),
-                   axis.title.y=element_blank(),
-                   axis.text.y=element_blank(),
-                   axis.ticks.y=element_blank(),
+                   axis.title.x = element_blank(),
+                   axis.text.x = element_text(size = 20, face = "bold"),
+                   axis.ticks.x = element_blank(),
+                   axis.title.y = element_blank(),
+                   axis.text.y = element_blank(),
+                   axis.ticks.y = element_blank(),
                    plot.title = element_blank(),
                    strip.text = element_text(size = 15, face = "bold"),
                    strip.background = element_blank(), strip.placement = "outside",
@@ -284,7 +284,7 @@ unique(tax$Class)
 tax_all <- tax
 
 # Create taxonomy file for phyto- & mixoplankton (primary producers)
-# based on https://doi.org/10.1111/jeu.12691
+# based on https://doi.org/10.1111/jeu.12691 and other literature data
 tax_chlo <- filter(tax, tax$Class=="Chlorarachniophyceae")
 tax <- filter(tax, tax$Supergroup!="Cercozoa")
 tax <- filter(tax, tax$Supergroup!="Apusozoa")
@@ -308,6 +308,21 @@ tax <- filter(tax, tax$Division!="Perkinsea")
 tax <- filter(tax, tax$Division!="Opisthokonta_X")
 tax <- filter(tax, tax$Class!="Noctilucophyceae")
 tax <- filter(tax, tax$Genus!="Minorisa")
+tax <- filter(tax, tax$Family!="Amphisoleniaceae")
+tax <- filter(tax, tax$Genus!="Gyrodinium")
+tax <- filter(tax, tax$Genus!="Islandinium")
+tax <- filter(tax, tax$Genus!="Archaeperidinium")
+tax <- filter(tax, tax$Genus!="Dinophysis")
+tax <- filter(tax, tax$Genus!="Diplopsalis")
+tax <- filter(tax, tax$Genus!="Luciella")
+tax <- filter(tax, tax$Genus!="Biecheleria")
+tax <- filter(tax, tax$Genus!="Phalacroma")
+tax <- filter(tax, tax$Genus!="Polykrikos")
+tax <- filter(tax, tax$Genus!="Protoperidinium")
+tax <- filter(tax, tax$Genus!="Qia")
+tax <- filter(tax, tax$Genus!="Protodinium")
+tax <- filter(tax, tax$Genus!="Stoeckeria")
+
 
 tax <- rbind(tax, tax_chlo)
 
@@ -331,7 +346,7 @@ ps_raw <- phyloseq(OTU, TAX, samples)
 ## Scaling with ranked subsampling (srs)
 # All samples will be scaled to sample with lowest sequencing depth
 depth.min <- min(colSums(asv))
-asv.srs <- SRS(asv, depth.min) # running the SRS function
+asv.srs <- SRS(asv, depth.min)
 rownames(asv.srs) <- rownames(asv)
 rm(depth.min)
 
@@ -445,7 +460,7 @@ hw <- rbind(hwa_m, hwf_m)
 # After Gavin Simson
 
 ### FUT
-m1 <- gam(LRR ~ s(time, k=3, fx= TRUE), data = fut_m)
+m1 <- gam(LRR ~ s(time, k=4, fx= TRUE), data = fut_m)
 m1$aic # knot number to decrease aic value
 summary(m1)
 plot(m1, residuals = TRUE, pch = 19, cex = 0.75)
@@ -478,7 +493,7 @@ lines(upper ~ time, data = pdat, lty = "dashed")
 lines(lower ~ time, data = pdat, lty = "dashed")
 lines(unlist(m1.dsig$incr) ~ time, data = pdat, col = "blue", lwd = 3)
 lines(unlist(m1.dsig$decr) ~ time, data = pdat, col = "red", lwd = 3)
-# significant decrease from day 0 to 15
+# significant decrease from day 6 to 15 and increase from 22 to 27
 
 ## Plot prettier for paper
 # Extract gam lines
@@ -490,7 +505,14 @@ newdat$LLR_upr <- p2$fit + (1.96 * p2$se.fit)
 newdat$LLR_lwr <- p2$fit - (1.96 * p2$se.fit)
 newdat$Treatment <- "FUT"
 signi <- newdat
-signi <- subset(signi, time < 15.1)
+signi <- subset(signi, time < 18.1)
+signi <- subset(signi, time > 5.9)
+signi1 <- signi
+signi <- newdat
+signi <- subset(signi, time < 27.1)
+signi <- subset(signi, time > 22.9)
+signi2 <- signi
+
 head(newdat)
 
 # plot
@@ -498,7 +520,8 @@ fut_time <- ggplot(fut_m, aes(x=time, y=LRR, size = sig, color = Treatment)) +
   geom_hline(yintercept=0, linetype="dashed")+
   geom_point(position=position_dodge(0.05), size = 3, alpha = 0.8) +
   geom_line(data = newdat, aes(time, LLRmin), size = 1) +
-  geom_line(data = signi, aes(time, LLRmin), size = 2, color = "indianred1") +
+  geom_line(data = signi1, aes(time, LLRmin), size = 2, color = "indianred1") +
+  geom_line(data = signi2, aes(time, LLRmin), size = 2, color = "indianred1") +
   geom_line(data = newdat, aes(time, LLR_upr), size = .5, alpha = 0.8, linetype="dotted") +
   geom_line(data = newdat, aes(time, LLR_lwr), size = .5, alpha = 0.8, linetype="dotted") +
   plot.theme +
@@ -614,9 +637,9 @@ signi_fut_hw <- signi
 
 ## Plot both HW together
 hw_time <- ggplot(hw, aes(x=time, y=LRR, color = Treatment, shape = Treatment)) +
-  geom_hline(yintercept=0, linetype="dashed") +
   geom_rect(data=NULL,aes(xmin=10,xmax=16,ymin=-Inf,ymax=Inf),
-            fill="gold", alpha = .5)+
+            fill="gold", alpha = .5)+ 
+  geom_hline(yintercept=0, linetype="dashed") +
   geom_point(position=position_dodge(0.05), size = 3, alpha = 0.8) +
   geom_line(data = newdat_amb, aes(time, LLRmin), size = 1) +
   geom_line(data = signi_amb1, aes(time, LLRmin), size = 3, color = "royalblue1") +
@@ -714,7 +737,6 @@ newdat$LLR_lwr <- p2$fit - (1.96 * p2$se.fit)
 newdat$Treatment <- "FUT"
 signi <- newdat
 signi <- subset(signi, time < 15.1)
-head(newdat)
 
 # plot
 fut_time <- ggplot(fut_m, aes(x=time, y=LRR, size = sig, color = Treatment)) + 
@@ -776,10 +798,14 @@ newdat$LLRmin_se <- p2$se.fit
 newdat$LLR_upr <- p2$fit + (1.96 * p2$se.fit)
 newdat$LLR_lwr <- p2$fit - (1.96 * p2$se.fit)
 newdat$Treatment <- "AMB+HW"
-
+signi <- newdat
+signi <- subset(signi, time < 15.1)
+signi <- subset(signi, time > 10.9)
+newdat_amb <- newdat
+signi_amb1 <- signi
 
 ### FUT-HW
-m1 <- gam(LRR ~ s(time, k=6, fx= TRUE), data = hwf_m)
+m1 <- gam(LRR ~ s(time, k=5, fx= TRUE), data = hwf_m)
 m1$aic
 summary(m1)
 plot(m1, residuals = TRUE, pch = 19, cex = 0.75)
@@ -829,11 +855,12 @@ signi_fut_hw <- signi
 
 ## Plot both HW together
 hw_time <- ggplot(hw, aes(x=time, y=LRR, color = Treatment, shape = Treatment)) +
-  geom_hline(yintercept=0, linetype="dashed") +
   geom_rect(data=NULL,aes(xmin=10,xmax=16,ymin=-Inf,ymax=Inf),
             fill="gold", alpha = .5)+
+  geom_hline(yintercept=0, linetype="dashed") +
   geom_point(position=position_dodge(0.05), size = 3, alpha = 0.8) +
   geom_line(data = newdat_amb, aes(time, LLRmin), size = 1) +
+  geom_line(data = signi_amb1, aes(time, LLRmin), size = 3, color = "royalblue1") +
   geom_line(data = newdat_amb, aes(time, LLR_upr), size = .5, alpha = 0.8, linetype="dotted") +
   geom_line(data = newdat_amb, aes(time, LLR_lwr), size = .5, alpha = 0.8, linetype="dotted") +
   geom_line(data = newdat_fut_hw, aes(time, LLRmin), size = 1) +
@@ -881,7 +908,7 @@ hw <- rbind(hwa_m, hwf_m)
 # After Gavin Simson
 
 ### FUT
-m1 <- gam(LRR ~ s(time, k=3, fx= TRUE), data = fut_m)
+m1 <- gam(LRR ~ s(time, k=7, fx= TRUE), data = fut_m)
 m1$aic # knot number to decrease aic value
 summary(m1)
 plot(m1, residuals = TRUE, pch = 19, cex = 0.75)
@@ -926,15 +953,21 @@ newdat$LLR_upr <- p2$fit + (1.96 * p2$se.fit)
 newdat$LLR_lwr <- p2$fit - (1.96 * p2$se.fit)
 newdat$Treatment <- "FUT"
 signi <- newdat
-signi <- subset(signi, time < 15.1)
-head(newdat)
+signi <- subset(signi, time < 18.1)
+signi <- subset(signi, time > 12.9)
+signi1 <- signi
+signi <- newdat
+signi <- subset(signi, time < 25.1)
+signi <- subset(signi, time > 19.9)
+signi2 <- signi
 
 # plot
 fut_time <- ggplot(fut_m, aes(x=time, y=LRR, size = sig, color = Treatment)) + 
   geom_hline(yintercept=0, linetype="dashed")+
   geom_point(position=position_dodge(0.05), size = 3, alpha = 0.8) +
   geom_line(data = newdat, aes(time, LLRmin), size = 1) +
-  geom_line(data = signi, aes(time, LLRmin), size = 2, color = "indianred1") +
+  geom_line(data = signi1, aes(time, LLRmin), size = 2, color = "indianred1") +
+  geom_line(data = signi2, aes(time, LLRmin), size = 2, color = "indianred1") +
   geom_line(data = newdat, aes(time, LLR_upr), size = .5, alpha = 0.8, linetype="dotted") +
   geom_line(data = newdat, aes(time, LLR_lwr), size = .5, alpha = 0.8, linetype="dotted") +
   plot.theme +
@@ -1050,9 +1083,9 @@ signi_fut_hw <- signi
 
 ## Plot both HW together
 hw_time <- ggplot(hw, aes(x=time, y=LRR, color = Treatment, shape = Treatment)) +
-  geom_hline(yintercept=0, linetype="dashed") +
   geom_rect(data=NULL,aes(xmin=10,xmax=16,ymin=-Inf,ymax=Inf),
             fill="gold", alpha = .5)+
+  geom_hline(yintercept=0, linetype="dashed") +
   geom_point(position=position_dodge(0.05), size = 3, alpha = 0.8) +
   geom_line(data = newdat_amb, aes(time, LLRmin), size = 1) +
   geom_line(data = signi_amb1, aes(time, LLRmin), size = 3, color = "royalblue1") +
@@ -1082,7 +1115,7 @@ df2 <- df$data
 species <- df2 %>% select(Sample, Species, Abundance, Treatment, time, replicate)
 
 # Prepare dataframe for plotting
-species$Species[species$Abundance < 200] <- "Other"
+species$Species[species$Abundance < 100] <- "Other"
 
 species <- species %>%
   mutate(Treatment = recode(Treatment, 'RCP' = 'FUT')) %>%
@@ -1102,9 +1135,9 @@ species <- species %>%
   mutate(Species = recode(Species, "Micromonas commoda_A2" = 'Micromonas commoda'))
 
 ## Create color palette
-spe_pal <- qualpal(30, colorspace=list(h=c(0,360), s=c(0.3,1), l=c(0.2,0.8)))
+spe_pal <- qualpal(32, colorspace=list(h=c(0,360), s=c(0.3,1), l=c(0.2,0.8)))
 
-## Plotting with and without legend
+## Plotting
 species_plot <- ggplot(species, aes(fill = Species, x = time, y = Abundance)) +
   facet_wrap(~ Treatment, ncol = 2) +
   geom_bar(position = "stack", stat = "identity") +
