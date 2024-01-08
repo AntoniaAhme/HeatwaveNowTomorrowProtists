@@ -419,7 +419,7 @@ shan_time <- ggplot(div_shan, aes(x=time, y=Shannon, color=Treatment)) +
                           axis.text.x = element_text(face="plain", color="black", size=16),
                           axis.text.y = element_text(face="plain", color="black", size=16),
                           panel.background = element_rect(colour = "black", size=1),
-                          legend.position=c(.1,.2)) +
+                          legend.position="none") +
   labs(x="Incubation time (d)", y=bquote("Shannon index")) + 
   scale_color_manual(values=treat_pal2)
 
