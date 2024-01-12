@@ -265,7 +265,7 @@ tax <- tax[tax$ASV %in% rownames(asv),] # create matching taxonomy table after r
 unique(tax$Division)
 unique(tax$Supergroup)
 
-# Remove unwanted divisions, NAs in higher taxonomic ranks, parasites and multicellular organisms
+# Remove unwanted divisions, NAs in higher taxonomic ranks and multicellular organisms
 tax <- filter(tax, tax$Division!="Metazoa")
 tax <- filter(tax, tax$Division!="Fungi")
 tax <- filter(tax, tax$Division!="Cryptophyta:nucl")

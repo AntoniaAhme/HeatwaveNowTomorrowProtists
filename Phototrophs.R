@@ -265,7 +265,7 @@ tax <- tax[tax$ASV %in% rownames(asv),] # create matching taxonomy table after r
 unique(tax$Division)
 unique(tax$Supergroup)
 
-# Remove unwanted divisions, NAs in higher taxonomic ranks, parasites and multicellular organisms
+# Remove unwanted divisions, NAs in higher taxonomic ranks and multicellular organisms
 tax <- filter(tax, tax$Division!="Metazoa")
 tax <- filter(tax, tax$Division!="Fungi")
 tax <- filter(tax, tax$Division!="Cryptophyta:nucl")
@@ -908,7 +908,7 @@ hw <- rbind(hwa_m, hwf_m)
 # After Gavin Simson
 
 ### FUT
-m1 <- gam(LRR ~ s(time, k=7, fx= TRUE), data = fut_m)
+m1 <- gam(LRR ~ s(time, k=4, fx= TRUE), data = fut_m)
 m1$aic # knot number to decrease aic value
 summary(m1)
 plot(m1, residuals = TRUE, pch = 19, cex = 0.75)
@@ -941,7 +941,7 @@ lines(upper ~ time, data = pdat, lty = "dashed")
 lines(lower ~ time, data = pdat, lty = "dashed")
 lines(unlist(m1.dsig$incr) ~ time, data = pdat, col = "blue", lwd = 3)
 lines(unlist(m1.dsig$decr) ~ time, data = pdat, col = "red", lwd = 3)
-# significant decrease from day 0 to 15
+# significant decrease from day 6 to 15 and increase from day 22 to day 27
 
 ## Plot prettier for paper
 # Extract gam lines
@@ -953,12 +953,12 @@ newdat$LLR_upr <- p2$fit + (1.96 * p2$se.fit)
 newdat$LLR_lwr <- p2$fit - (1.96 * p2$se.fit)
 newdat$Treatment <- "FUT"
 signi <- newdat
-signi <- subset(signi, time < 18.1)
-signi <- subset(signi, time > 12.9)
+signi <- subset(signi, time < 15.1)
+signi <- subset(signi, time > 5.9)
 signi1 <- signi
 signi <- newdat
-signi <- subset(signi, time < 25.1)
-signi <- subset(signi, time > 19.9)
+signi <- subset(signi, time < 27.1)
+signi <- subset(signi, time > 21.9)
 signi2 <- signi
 
 # plot
