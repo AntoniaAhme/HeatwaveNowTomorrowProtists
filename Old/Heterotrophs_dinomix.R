@@ -1,10 +1,10 @@
 ### HNT22 mesocosms 18S rRNA metabarcoding data ###
-### Autotrophic protists ###
-## Antonia Ahme, 07.12.2023 ##
+### Heterotrophic protists ###
+## Antonia Ahme, 17.11.2023 ##
 
 rm(list=ls())
 options(stringsAsFactors = F)
-setwd("~/AWI/RProjects/HNT22") # Set to your own working directory
+setwd("~/AWI/RProjects/HNT22")
 
 set.seed(22)
 
@@ -30,17 +30,17 @@ treat_pch <- c(16,17)
 bar.theme <- theme(panel.background = element_blank(),
                    panel.border = element_blank(),
                    panel.grid = element_blank(),
-                   axis.title.x = element_blank(),
-                   axis.text.x = element_text(size = 20, face = "bold"),
-                   axis.ticks.x = element_blank(),
-                   axis.title.y = element_blank(),
-                   axis.text.y = element_blank(),
-                   axis.ticks.y = element_blank(),
+                   axis.title.x=element_blank(),
+                   axis.text.x = element_text(size = 20, face= "bold"),
+                   axis.ticks.x=element_blank(),
+                   axis.title.y=element_blank(),
+                   axis.text.y=element_blank(),
+                   axis.ticks.y=element_blank(),
                    plot.title = element_blank(),
                    strip.text = element_text(size = 15, face = "bold"),
                    strip.background = element_blank(), strip.placement = "outside",
                    text = element_text(size = 20, face = "bold"), legend.position = "right",
-                   legend.text = element_text(face = "italic"))
+                   legend.text = element_text())
 
 plot.theme <- theme(panel.background = element_blank(),
                     panel.border = element_rect(colour = "black", fill=NA, size=1),
@@ -265,13 +265,14 @@ tax <- tax[tax$ASV %in% rownames(asv),] # create matching taxonomy table after r
 unique(tax$Division)
 unique(tax$Supergroup)
 
-# Remove unwanted divisions, NAs in higher taxonomic ranks and multicellular organisms
+# Remove unwanted divisions, NAs in higher taxonomic ranks, parasites and multicellular organisms
 tax <- filter(tax, tax$Division!="Metazoa")
 tax <- filter(tax, tax$Division!="Fungi")
 tax <- filter(tax, tax$Division!="Cryptophyta:nucl")
 tax <- filter(tax, tax$Division!="Chlorophyta:plas")
 tax <- filter(tax, tax$Division!="Ochrophyta:plas")
 tax <- filter(tax, tax$Supergroup!="Archaeplastida:plas")
+tax <- filter(tax, tax$Class!="Syndiniales")
 tax <- filter(tax, tax$Class!="Embryophyceae")
 tax <- filter(tax, tax$Class!="Klebsormidiophyceae")
 tax <- tax[!is.na(tax$Division),]
@@ -280,50 +281,54 @@ tax[is.na(tax)] <- "Other"
 unique(tax$Division)
 unique(tax$Class)
 
+# Rename taxa
+tax <- tax %>%
+  mutate(Division = recode(Division, "Stramenopiles_X" = 'Stramenopiles')) %>%
+  mutate(Division = recode(Division, "Opisthokonta_X" = 'Opisthokonta')) %>%
+  mutate(Division = recode(Division, "Pseudofungi" = 'MAST clades')) %>%
+  mutate(Class = recode(Class, "Filosa-Thecofilosea" = 'Thecofilosea')) %>%
+  mutate(Class = recode(Class, "Filosa-Imbricatea" = 'Imbricatea')) %>%
+  mutate(Class = recode(Class, "Stramenopiles_XX" = 'Stramenopiles')) %>%
+  mutate(Class = recode(Class, "Picozoa_X" = 'Picozoa')) %>%
+  mutate(Class = recode(Class, "Telonemia_X" = 'Telonemia'))
+
+unique(tax$Division)
+unique(tax$Class)
+
 tax_all <- tax
 
-# Create taxonomy file for phyto- & mixoplankton (primary producers)
-# based on https://doi.org/10.1111/jeu.12691 and other literature data
-tax_chlo <- filter(tax, tax$Class=="Chlorarachniophyceae")
-tax <- filter(tax, tax$Supergroup!="Cercozoa")
-tax <- filter(tax, tax$Supergroup!="Apusozoa")
-tax <- filter(tax, tax$Supergroup!="Amoebozoa")
-tax <- filter(tax, tax$Supergroup!="Rhizaria")
-tax <- filter(tax, tax$Division!="Choanoflagellida")
-tax <- filter(tax, tax$Division!="Ciliophora")
-tax <- filter(tax, tax$Division!="Pseudofungi")
-tax <- filter(tax, tax$Division!="Opalozoa")
-tax <- filter(tax, tax$Division!="Picozoa")
-tax <- filter(tax, tax$Division!="Telonemia")
-tax <- filter(tax, tax$Division!="Katablepharidophyta")
-tax <- filter(tax, tax$Division!="Sagenista")
-tax <- filter(tax, tax$Division!="Apicomplexa")
-tax <- filter(tax, tax$Division!="Mesomycetozoa")
-tax <- filter(tax, tax$Division!="Centroheliozoa")
-tax <- filter(tax, tax$Division!="Stramenopiles_X")
-tax <- filter(tax, tax$Division!="Streptophyta")
-tax <- filter(tax, tax$Division!="Rhodelphidia")
-tax <- filter(tax, tax$Division!="Perkinsea")
-tax <- filter(tax, tax$Division!="Opisthokonta_X")
-tax <- filter(tax, tax$Class!="Noctilucophyceae")
-tax <- filter(tax, tax$Genus!="Minorisa")
-tax <- filter(tax, tax$Family!="Amphisoleniaceae")
-tax <- filter(tax, tax$Genus!="Gyrodinium")
-tax <- filter(tax, tax$Genus!="Islandinium")
-tax <- filter(tax, tax$Genus!="Archaeperidinium")
-tax <- filter(tax, tax$Genus!="Dinophysis")
-tax <- filter(tax, tax$Genus!="Diplopsalis")
-tax <- filter(tax, tax$Genus!="Luciella")
-tax <- filter(tax, tax$Genus!="Biecheleria")
-tax <- filter(tax, tax$Genus!="Phalacroma")
-tax <- filter(tax, tax$Genus!="Polykrikos")
-tax <- filter(tax, tax$Genus!="Protoperidinium")
-tax <- filter(tax, tax$Genus!="Qia")
-tax <- filter(tax, tax$Genus!="Protodinium")
-tax <- filter(tax, tax$Genus!="Stoeckeria")
+# Create taxonomy file for microzooplankton
+tax_rhod <- filter(tax, tax$Class=="Rhodelphea")
+tax_noct <- filter(tax, tax$Class=="Noctilucophyceae")
+tax_mino <- filter(tax, tax$Genus=="Minosira")
+tax_amp <- filter(tax, tax$Family=="Amphisoleniaceae")
+tax_gyr <- filter(tax, tax$Genus=="Gyrodinium")
+tax_is <- filter(tax, tax$Genus=="Islandinium")
+tax_amy <- filter(tax, tax$Genus=="Amylax")
+tax_arc <- filter(tax, tax$Genus=="Archaeperidinium")
+tax_din <- filter(tax, tax$Genus=="Dinophysis")
+tax_dip <- filter(tax, tax$Genus=="Diplopsalis")
+tax_luc <- filter(tax, tax$Genus=="Luciella")
+tax_pen <- filter(tax, tax$Genus=="Pentapharsodinium")
+tax_pha <- filter(tax, tax$Genus=="Phalacroma")
+tax_pol <- filter(tax, tax$Genus=="Polykrikos")
+tax_pro <- filter(tax, tax$Genus=="Protoperidinium")
+tax_qia <- filter(tax, tax$Genus=="Qia")
+tax_po <- filter(tax, tax$Genus=="Protodinium")
+tax_sto <- filter(tax, tax$Genus=="Stockeria")
+tax <- filter(tax, tax$Supergroup!="Archaeplastida")
+tax <- filter(tax, tax$Division!="Haptophyta")
+tax <- filter(tax, tax$Division!="Ochrophyta")
+tax <- filter(tax, tax$Division!="Chlorophyta")
+tax <- filter(tax, tax$Division!="Rhodophyta")
+tax <- filter(tax, tax$Division!="Cryptophyta")
+tax <- filter(tax, tax$Division!="Dinoflagellata")
+tax <- filter(tax, tax$Division!="Prasinodermophyta")
+tax <- filter(tax, tax$Class!="Chlorarachniophyceae")
 
-
-tax <- rbind(tax, tax_chlo)
+tax <- rbind(tax, tax_rhod, tax_noct, tax_mino, tax_amp, tax_gyr, tax_is, tax_amy, 
+             tax_arc, tax_din, tax_dip, tax_luc, tax_pen, tax_pha, tax_pol, tax_pro, 
+             tax_qia, tax_po, tax_sto)
 
 # Subset asv tabs based on newly selected taxonomy
 asv <- asv[rownames(asv) %in% tax$ASV,]
@@ -345,7 +350,7 @@ ps_raw <- phyloseq(OTU, TAX, samples)
 ## Scaling with ranked subsampling (srs)
 # All samples will be scaled to sample with lowest sequencing depth
 depth.min <- min(colSums(asv))
-asv.srs <- SRS(asv, depth.min)
+asv.srs <- SRS(asv, depth.min) # running the SRS function
 rownames(asv.srs) <- rownames(asv)
 rm(depth.min)
 
@@ -396,7 +401,7 @@ sam$time <- as.numeric(sam$time)
 div <- sam
 
 ## Save diversity data as excel
-write_xlsx(div, "Data/Diversity_PP.xlsx")
+write_xlsx(div, "Data/Diversity_HP.xlsx")
 
 # Shannon
 # Create summary of data for shannon indec
@@ -420,7 +425,7 @@ shan_time <- ggplot(div_shan, aes(x=time, y=Shannon, color=Treatment)) +
   scale_color_manual(values=treat_pal2)
 
 shan_time
-ggsave("Output/AllShannonOverTime_PP.png", shan_time, height = 5, width = 10, dpi = 320)
+ggsave("Output/AllShannonOverTime_HP.png", shan_time, height = 5, width = 10, dpi = 320)
 
 #### CALCULATE & PLOT & ANALYSE SHANNON LRRs ####
 ## Create subsets for phases and groups of interest
@@ -492,7 +497,7 @@ lines(upper ~ time, data = pdat, lty = "dashed")
 lines(lower ~ time, data = pdat, lty = "dashed")
 lines(unlist(m1.dsig$incr) ~ time, data = pdat, col = "blue", lwd = 3)
 lines(unlist(m1.dsig$decr) ~ time, data = pdat, col = "red", lwd = 3)
-# significant decrease from day 6 to 15 and increase from 22 to 27
+# significant decrease from day 6 to 11
 
 ## Plot prettier for paper
 # Extract gam lines
@@ -504,14 +509,8 @@ newdat$LLR_upr <- p2$fit + (1.96 * p2$se.fit)
 newdat$LLR_lwr <- p2$fit - (1.96 * p2$se.fit)
 newdat$Treatment <- "FUT"
 signi <- newdat
-signi <- subset(signi, time < 18.1)
+signi <- subset(signi, time < 11.1)
 signi <- subset(signi, time > 5.9)
-signi1 <- signi
-signi <- newdat
-signi <- subset(signi, time < 27.1)
-signi <- subset(signi, time > 22.9)
-signi2 <- signi
-
 head(newdat)
 
 # plot
@@ -519,8 +518,7 @@ fut_time <- ggplot(fut_m, aes(x=time, y=LRR, size = sig, color = Treatment)) +
   geom_hline(yintercept=0, linetype="dashed")+
   geom_point(position=position_dodge(0.05), size = 3, alpha = 0.8) +
   geom_line(data = newdat, aes(time, LLRmin), size = 1) +
-  geom_line(data = signi1, aes(time, LLRmin), size = 2, color = "indianred1") +
-  geom_line(data = signi2, aes(time, LLRmin), size = 2, color = "indianred1") +
+  geom_line(data = signi, aes(time, LLRmin), size = 2, color = "indianred1") +
   geom_line(data = newdat, aes(time, LLR_upr), size = .5, alpha = 0.8, linetype="dotted") +
   geom_line(data = newdat, aes(time, LLR_lwr), size = .5, alpha = 0.8, linetype="dotted") +
   plot.theme +
@@ -528,9 +526,9 @@ fut_time <- ggplot(fut_m, aes(x=time, y=LRR, size = sig, color = Treatment)) +
   scale_color_manual(values=treat_pal) +
   coord_cartesian(ylim = c(-0.5, 0.3)) +
   scale_x_continuous(breaks = seq(0, 27, 3))
-  
+
 fut_time
-ggsave("Output/PP_FUT_LRR.png", fut_time, height = 4, width = 8, dpi = 320)
+ggsave("Output/HP_FUT_LRR.png", fut_time, height = 4, width = 8, dpi = 320)
 
 
 ### AMB-HW
@@ -575,15 +573,7 @@ newdat$LLRmin_se <- p2$se.fit
 newdat$LLR_upr <- p2$fit + (1.96 * p2$se.fit)
 newdat$LLR_lwr <- p2$fit - (1.96 * p2$se.fit)
 newdat$Treatment <- "AMB+HW"
-signi <- newdat
-signi <- subset(signi, time < 15.1)
-signi <- subset(signi, time > 10.9)
 newdat_amb <- newdat
-signi_amb1 <- signi
-signi <- newdat
-signi <- subset(signi, time < 22.1)
-signi <- subset(signi, time > 17.9)
-signi_amb2 <- signi
 
 ### FUT-HW
 m1 <- gam(LRR ~ s(time, k=5, fx= TRUE), data = hwf_m)
@@ -612,7 +602,7 @@ m1.dsig <- signifD(pdat$p2, d = m1.d[[Term]]$deriv,
 # Plot to see sginificant changes and manually add to own plots
 ylim <- with(pdat, range(upper, lower, p2))
 ylab <- expression(LRR)
- 
+
 plot(p2 ~ time, data = pdat, type = "n", ylab = ylab, ylim = ylim)
 lines(p2 ~ time, data = pdat)
 lines(upper ~ time, data = pdat, lty = "dashed")
@@ -628,25 +618,18 @@ newdat$LLRmin_se <- p2$se.fit
 newdat$LLR_upr <- p2$fit + (1.96 * p2$se.fit)
 newdat$LLR_lwr <- p2$fit - (1.96 * p2$se.fit)
 newdat$Treatment <- "FUT+HW"
-signi <- newdat
-signi <- subset(signi, time < 18.1)
-signi <- subset(signi, time > 12.9)
 newdat_fut_hw <- newdat
-signi_fut_hw <- signi
 
 ## Plot both HW together
 hw_time <- ggplot(hw, aes(x=time, y=LRR, color = Treatment, shape = Treatment)) +
-  geom_rect(data=NULL,aes(xmin=10,xmax=16,ymin=-Inf,ymax=Inf),
-            fill="gold", alpha = .5)+ 
   geom_hline(yintercept=0, linetype="dashed") +
+  geom_rect(data=NULL,aes(xmin=10,xmax=16,ymin=-Inf,ymax=Inf),
+            fill="gold", alpha = .5)+
   geom_point(position=position_dodge(0.05), size = 3, alpha = 0.8) +
   geom_line(data = newdat_amb, aes(time, LLRmin), size = 1) +
-  geom_line(data = signi_amb1, aes(time, LLRmin), size = 3, color = "royalblue1") +
-  geom_line(data = signi_amb2, aes(time, LLRmin), size = 3, color = "royalblue1") +
   geom_line(data = newdat_amb, aes(time, LLR_upr), size = .5, alpha = 0.8, linetype="dotted") +
   geom_line(data = newdat_amb, aes(time, LLR_lwr), size = .5, alpha = 0.8, linetype="dotted") +
   geom_line(data = newdat_fut_hw, aes(time, LLRmin), size = 1) +
-  geom_line(data = signi_fut_hw, aes(time, LLRmin), size = 3, color = "firebrick1") +
   geom_line(data = newdat_fut_hw, aes(time, LLR_upr), size = .5, alpha = 0.8, linetype="dotted") +
   geom_line(data = newdat_fut_hw, aes(time, LLR_lwr), size = .5, alpha = 0.8, linetype="dotted") +
   plot.theme +
@@ -657,7 +640,7 @@ hw_time <- ggplot(hw, aes(x=time, y=LRR, color = Treatment, shape = Treatment)) 
   scale_x_continuous(breaks = seq(0, 27, 3))
 
 hw_time
-ggsave("Output/PP_HW_LRR.png", hw_time, height = 4, width = 8, dpi = 320)
+ggsave("Output/HP_HW_LRR.png", hw_time, height = 4, width = 8, dpi = 320)
 
 
 #### CALCULATE & PLOT & ANALYSE RICHNESS LRRs ####
@@ -690,7 +673,7 @@ hw <- rbind(hwa_m, hwf_m)
 # After Gavin Simson
 
 ### FUT
-m1 <- gam(LRR ~ s(time, k=3, fx= TRUE), data = fut_m)
+m1 <- gam(LRR ~ s(time, k=4, fx= TRUE), data = fut_m)
 m1$aic # knot number to decrease aic value
 summary(m1)
 plot(m1, residuals = TRUE, pch = 19, cex = 0.75)
@@ -723,7 +706,7 @@ lines(upper ~ time, data = pdat, lty = "dashed")
 lines(lower ~ time, data = pdat, lty = "dashed")
 lines(unlist(m1.dsig$incr) ~ time, data = pdat, col = "blue", lwd = 3)
 lines(unlist(m1.dsig$decr) ~ time, data = pdat, col = "red", lwd = 3)
-# significant decrease from day 0 to 15
+# significant decrease from day 4 to 11
 
 ## Plot prettier for paper
 # Extract gam lines
@@ -735,7 +718,9 @@ newdat$LLR_upr <- p2$fit + (1.96 * p2$se.fit)
 newdat$LLR_lwr <- p2$fit - (1.96 * p2$se.fit)
 newdat$Treatment <- "FUT"
 signi <- newdat
-signi <- subset(signi, time < 15.1)
+signi <- subset(signi, time < 12.1)
+signi <- subset(signi, time > 3.9)
+head(newdat)
 
 # plot
 fut_time <- ggplot(fut_m, aes(x=time, y=LRR, size = sig, color = Treatment)) + 
@@ -752,7 +737,7 @@ fut_time <- ggplot(fut_m, aes(x=time, y=LRR, size = sig, color = Treatment)) +
   scale_x_continuous(breaks = seq(0, 27, 3))
 
 fut_time
-ggsave("Output/PP_FUT_LRR_rich.png", fut_time, height = 4, width = 8, dpi = 320)
+ggsave("Output/HP_FUT_LRR_rich.png", fut_time, height = 4, width = 8, dpi = 320)
 
 
 ### AMB-HW
@@ -797,14 +782,11 @@ newdat$LLRmin_se <- p2$se.fit
 newdat$LLR_upr <- p2$fit + (1.96 * p2$se.fit)
 newdat$LLR_lwr <- p2$fit - (1.96 * p2$se.fit)
 newdat$Treatment <- "AMB+HW"
-signi <- newdat
-signi <- subset(signi, time < 15.1)
-signi <- subset(signi, time > 10.9)
 newdat_amb <- newdat
-signi_amb1 <- signi
+
 
 ### FUT-HW
-m1 <- gam(LRR ~ s(time, k=5, fx= TRUE), data = hwf_m)
+m1 <- gam(LRR ~ s(time, k=4, fx= TRUE), data = hwf_m)
 m1$aic
 summary(m1)
 plot(m1, residuals = TRUE, pch = 19, cex = 0.75)
@@ -846,24 +828,18 @@ newdat$LLRmin_se <- p2$se.fit
 newdat$LLR_upr <- p2$fit + (1.96 * p2$se.fit)
 newdat$LLR_lwr <- p2$fit - (1.96 * p2$se.fit)
 newdat$Treatment <- "FUT+HW"
-signi <- newdat
-signi <- subset(signi, time < 27.1)
-signi <- subset(signi, time > 24.9)
 newdat_fut_hw <- newdat
-signi_fut_hw <- signi
 
 ## Plot both HW together
 hw_time <- ggplot(hw, aes(x=time, y=LRR, color = Treatment, shape = Treatment)) +
+  geom_hline(yintercept=0, linetype="dashed") +
   geom_rect(data=NULL,aes(xmin=10,xmax=16,ymin=-Inf,ymax=Inf),
             fill="gold", alpha = .5)+
-  geom_hline(yintercept=0, linetype="dashed") +
   geom_point(position=position_dodge(0.05), size = 3, alpha = 0.8) +
   geom_line(data = newdat_amb, aes(time, LLRmin), size = 1) +
-  geom_line(data = signi_amb1, aes(time, LLRmin), size = 3, color = "royalblue1") +
   geom_line(data = newdat_amb, aes(time, LLR_upr), size = .5, alpha = 0.8, linetype="dotted") +
   geom_line(data = newdat_amb, aes(time, LLR_lwr), size = .5, alpha = 0.8, linetype="dotted") +
   geom_line(data = newdat_fut_hw, aes(time, LLRmin), size = 1) +
-  geom_line(data = signi_fut_hw, aes(time, LLRmin), size = 3, color = "firebrick1") +
   geom_line(data = newdat_fut_hw, aes(time, LLR_upr), size = .5, alpha = 0.8, linetype="dotted") +
   geom_line(data = newdat_fut_hw, aes(time, LLR_lwr), size = .5, alpha = 0.8, linetype="dotted") +
   plot.theme +
@@ -874,7 +850,7 @@ hw_time <- ggplot(hw, aes(x=time, y=LRR, color = Treatment, shape = Treatment)) 
   scale_x_continuous(breaks = seq(0, 27, 3))
 
 hw_time
-ggsave("Output/PP_HW_LRR_rich.png", hw_time, height = 4, width = 8, dpi = 320)
+ggsave("Output/HP_HW_LRR_rich.png", hw_time, height = 4, width = 8, dpi = 320)
 
 
 #### CALCULATE & PLOT & ANALYSE EVENNESS LRRs ####
@@ -940,7 +916,7 @@ lines(upper ~ time, data = pdat, lty = "dashed")
 lines(lower ~ time, data = pdat, lty = "dashed")
 lines(unlist(m1.dsig$incr) ~ time, data = pdat, col = "blue", lwd = 3)
 lines(unlist(m1.dsig$decr) ~ time, data = pdat, col = "red", lwd = 3)
-# significant decrease from day 6 to 15 and increase from day 22 to day 27
+# significant decrease from day 0 to 15
 
 ## Plot prettier for paper
 # Extract gam lines
@@ -951,22 +927,12 @@ newdat$LLRmin_se <- p2$se.fit
 newdat$LLR_upr <- p2$fit + (1.96 * p2$se.fit)
 newdat$LLR_lwr <- p2$fit - (1.96 * p2$se.fit)
 newdat$Treatment <- "FUT"
-signi <- newdat
-signi <- subset(signi, time < 15.1)
-signi <- subset(signi, time > 5.9)
-signi1 <- signi
-signi <- newdat
-signi <- subset(signi, time < 27.1)
-signi <- subset(signi, time > 21.9)
-signi2 <- signi
 
 # plot
 fut_time <- ggplot(fut_m, aes(x=time, y=LRR, size = sig, color = Treatment)) + 
   geom_hline(yintercept=0, linetype="dashed")+
   geom_point(position=position_dodge(0.05), size = 3, alpha = 0.8) +
   geom_line(data = newdat, aes(time, LLRmin), size = 1) +
-  geom_line(data = signi1, aes(time, LLRmin), size = 2, color = "indianred1") +
-  geom_line(data = signi2, aes(time, LLRmin), size = 2, color = "indianred1") +
   geom_line(data = newdat, aes(time, LLR_upr), size = .5, alpha = 0.8, linetype="dotted") +
   geom_line(data = newdat, aes(time, LLR_lwr), size = .5, alpha = 0.8, linetype="dotted") +
   plot.theme +
@@ -976,7 +942,7 @@ fut_time <- ggplot(fut_m, aes(x=time, y=LRR, size = sig, color = Treatment)) +
   scale_x_continuous(breaks = seq(0, 27, 3))
 
 fut_time
-ggsave("Output/PP_FUT_LRR_even.png", fut_time, height = 4, width = 8, dpi = 320)
+ggsave("Output/HP_FUT_LRR_even.png", fut_time, height = 4, width = 8, dpi = 320)
 
 
 ### AMB-HW
@@ -1021,15 +987,7 @@ newdat$LLRmin_se <- p2$se.fit
 newdat$LLR_upr <- p2$fit + (1.96 * p2$se.fit)
 newdat$LLR_lwr <- p2$fit - (1.96 * p2$se.fit)
 newdat$Treatment <- "AMB+HW"
-signi <- newdat
-signi <- subset(signi, time < 15.1)
-signi <- subset(signi, time > 10.9)
 newdat_amb <- newdat
-signi_amb1 <- signi
-signi <- newdat
-signi <- subset(signi, time < 22.1)
-signi <- subset(signi, time > 17.9)
-signi_amb2 <- signi
 
 ### FUT-HW
 m1 <- gam(LRR ~ s(time, k=5, fx= TRUE), data = hwf_m)
@@ -1074,25 +1032,18 @@ newdat$LLRmin_se <- p2$se.fit
 newdat$LLR_upr <- p2$fit + (1.96 * p2$se.fit)
 newdat$LLR_lwr <- p2$fit - (1.96 * p2$se.fit)
 newdat$Treatment <- "FUT+HW"
-signi <- newdat
-signi <- subset(signi, time < 18.1)
-signi <- subset(signi, time > 12.9)
 newdat_fut_hw <- newdat
-signi_fut_hw <- signi
 
 ## Plot both HW together
 hw_time <- ggplot(hw, aes(x=time, y=LRR, color = Treatment, shape = Treatment)) +
+  geom_hline(yintercept=0, linetype="dashed") +
   geom_rect(data=NULL,aes(xmin=10,xmax=16,ymin=-Inf,ymax=Inf),
             fill="gold", alpha = .5)+
-  geom_hline(yintercept=0, linetype="dashed") +
   geom_point(position=position_dodge(0.05), size = 3, alpha = 0.8) +
   geom_line(data = newdat_amb, aes(time, LLRmin), size = 1) +
-  geom_line(data = signi_amb1, aes(time, LLRmin), size = 3, color = "royalblue1") +
-  geom_line(data = signi_amb2, aes(time, LLRmin), size = 3, color = "royalblue1") +
   geom_line(data = newdat_amb, aes(time, LLR_upr), size = .5, alpha = 0.8, linetype="dotted") +
   geom_line(data = newdat_amb, aes(time, LLR_lwr), size = .5, alpha = 0.8, linetype="dotted") +
   geom_line(data = newdat_fut_hw, aes(time, LLRmin), size = 1) +
-  geom_line(data = signi_fut_hw, aes(time, LLRmin), size = 3, color = "firebrick1") +
   geom_line(data = newdat_fut_hw, aes(time, LLR_upr), size = .5, alpha = 0.8, linetype="dotted") +
   geom_line(data = newdat_fut_hw, aes(time, LLR_lwr), size = .5, alpha = 0.8, linetype="dotted") +
   plot.theme +
@@ -1103,8 +1054,7 @@ hw_time <- ggplot(hw, aes(x=time, y=LRR, color = Treatment, shape = Treatment)) 
   scale_x_continuous(breaks = seq(0, 27, 3))
 
 hw_time
-ggsave("Output/PP_HW_LRR_even.png", hw_time, height = 4, width = 8, dpi = 320)
-
+ggsave("Output/HP_HW_LRR_even.png", hw_time, height = 4, width = 8, dpi = 320)
 
 #### BARGRAPHS SPECIES LEVEL ####
 ## Create a dataframe on species level
@@ -1114,7 +1064,7 @@ df2 <- df$data
 species <- df2 %>% select(Sample, Species, Abundance, Treatment, time, replicate)
 
 # Prepare dataframe for plotting
-species$Species[species$Abundance < 100] <- "Other"
+species$Species[species$Abundance < 20] <- "Other"
 
 species <- species %>%
   mutate(Treatment = recode(Treatment, 'RCP' = 'FUT')) %>%
@@ -1126,25 +1076,39 @@ species$Species <- sub("_", " ", species$Species)
 species$Species <- sub("X_", "", species$Species)
 species$Species <- sub("XXX_", "", species$Species)
 species$Species <- sub("XX", "", species$Species)
+species$Species <- sub("X", "", species$Species)
+species$Species <- sub(" sp.", "", species$Species)
+species$Species <- sub("Group_MAIP_2_sp.", "", species$Species)
+species$Species <- sub("LAB17_sp.", "", species$Species)
 
 species <- species %>%
-  mutate(Species = recode(Species, "Dolichomastigaceae-B sp." = 'Dolichomastigaceae indet.')) %>%
-  mutate(Species = recode(Species, "MOCH-3 sp." = 'Marine ochrophyte indet.')) %>%
-  mutate(Species = recode(Species, "Prasino-Clade-VIII sp." = 'Prasino-Clade indet.')) %>%
-  mutate(Species = recode(Species, "Micromonas commoda_A2" = 'Micromonas commoda'))
+  mutate(Species = recode(Species, "Telonemia-Group-1" = 'Telonemia')) %>%
+  mutate(Species = recode(Species, "Telonemia-Group-2" = 'Telonemia')) %>%
+  mutate(Species = recode(Species, "MAST-12A" = 'MAST clades')) %>%
+  mutate(Species = recode(Species, "MAST-12D" = 'MAST clades')) %>%
+  mutate(Species = recode(Species, "MAST-1C" = 'MAST clades')) %>%
+  mutate(Species = recode(Species, "MAST-2B" = 'MAST clades')) %>%
+  mutate(Species = recode(Species, "MAST-2D" = 'MAST clades'))
+
+species$Species <- sub("-", " ", species$Species)
+species$Species <- sub("1", "", species$Species)
+species$Species <- sub("-2", "", species$Species)
+
+## Classes of PR2 are spanning several taxonomic levels, rename to group
+colnames(species)[2] <- "Group"
 
 ## Create color palette
-spe_pal <- qualpal(32, colorspace=list(h=c(0,360), s=c(0.3,1), l=c(0.2,0.8)))
+spe_pal <- qualpal(21, colorspace=list(h=c(0,360), s=c(0.3,1), l=c(0.2,0.8)))
 
-## Plotting
-species_plot <- ggplot(species, aes(fill = Species, x = time, y = Abundance)) +
+## Plotting with and without legend
+species_plot <- ggplot(species, aes(fill = Group, x = time, y = Abundance)) +
   facet_wrap(~ Treatment, ncol = 2) +
   geom_bar(position = "stack", stat = "identity") +
   bar.theme +
   scale_fill_manual(values = spe_pal$hex)
 
 species_plot
-ggsave("Output/PPSpecies.png", species_plot, height = 8, width = 14, dpi = 320)
+ggsave("Output/HPSpecies.png", species_plot, height = 8, width = 14, dpi = 320)
 
 #### PACKAGES ####
 ## Check which packages you actually used for documentation and tidying purposes

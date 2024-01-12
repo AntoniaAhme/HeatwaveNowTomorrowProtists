@@ -1,6 +1,6 @@
 ### HNT22 mesocosms 18S rRNA metabarcoding data ###
 ### Heterotrophic protists ###
-## Antonia Ahme, 17.11.2023 ##
+## Antonia Ahme, 12.01.2024 ##
 
 rm(list=ls())
 options(stringsAsFactors = F)
@@ -272,7 +272,6 @@ tax <- filter(tax, tax$Division!="Cryptophyta:nucl")
 tax <- filter(tax, tax$Division!="Chlorophyta:plas")
 tax <- filter(tax, tax$Division!="Ochrophyta:plas")
 tax <- filter(tax, tax$Supergroup!="Archaeplastida:plas")
-tax <- filter(tax, tax$Class!="Syndiniales")
 tax <- filter(tax, tax$Class!="Embryophyceae")
 tax <- filter(tax, tax$Class!="Klebsormidiophyceae")
 tax <- tax[!is.na(tax$Division),]
@@ -300,6 +299,7 @@ tax_all <- tax
 # Create taxonomy file for microzooplankton
 tax_rhod <- filter(tax, tax$Class=="Rhodelphea")
 tax_noct <- filter(tax, tax$Class=="Noctilucophyceae")
+tax_syn <- filter(tax, tax$Class=="Syndiniales")
 tax_mino <- filter(tax, tax$Genus=="Minosira")
 tax_amp <- filter(tax, tax$Family=="Amphisoleniaceae")
 tax_gyr <- filter(tax, tax$Genus=="Gyrodinium")
@@ -327,7 +327,7 @@ tax <- filter(tax, tax$Class!="Chlorarachniophyceae")
 
 tax <- rbind(tax, tax_rhod, tax_noct, tax_mino, tax_amp, tax_gyr, tax_is, 
              tax_arc, tax_din, tax_dip, tax_luc, tax_pha, tax_pol, tax_pro, 
-             tax_qia, tax_po, tax_sto, tax_bie)
+             tax_qia, tax_po, tax_sto, tax_bie, tax_syn)
 
 # Subset asv tabs based on newly selected taxonomy
 asv <- asv[rownames(asv) %in% tax$ASV,]
@@ -463,7 +463,7 @@ hw <- rbind(hwa_m, hwf_m)
 # After Gavin Simson
 
 ### FUT
-m1 <- gam(LRR ~ s(time, k=5, fx= TRUE), data = fut_m)
+m1 <- gam(LRR ~ s(time, k=6, fx= TRUE), data = fut_m)
 m1$aic # knot number to decrease aic value
 summary(m1)
 plot(m1, residuals = TRUE, pch = 19, cex = 0.75)
@@ -508,11 +508,11 @@ newdat$LLR_upr <- p2$fit + (1.96 * p2$se.fit)
 newdat$LLR_lwr <- p2$fit - (1.96 * p2$se.fit)
 newdat$Treatment <- "FUT"
 signi <- newdat
-signi <- subset(signi, time < 18.1)
+signi <- subset(signi, time < 15.1)
 signi1 <- signi
 signi <- newdat
-signi <- subset(signi, time < 25.1)
-signi <- subset(signi, time > 19.9)
+signi <- subset(signi, time < 27.1)
+signi <- subset(signi, time > 21.9)
 signi2 <- signi
 
 # plot
@@ -709,7 +709,7 @@ lines(upper ~ time, data = pdat, lty = "dashed")
 lines(lower ~ time, data = pdat, lty = "dashed")
 lines(unlist(m1.dsig$incr) ~ time, data = pdat, col = "blue", lwd = 3)
 lines(unlist(m1.dsig$decr) ~ time, data = pdat, col = "red", lwd = 3)
-# significant decrease from day 6 to 20
+# significant decrease from day 6 to 18 and increase from day 22 to 27
 
 ## Plot prettier for paper
 # Extract gam lines
@@ -721,16 +721,21 @@ newdat$LLR_upr <- p2$fit + (1.96 * p2$se.fit)
 newdat$LLR_lwr <- p2$fit - (1.96 * p2$se.fit)
 newdat$Treatment <- "FUT"
 signi <- newdat
-signi <- subset(signi, time < 20.1)
+signi <- subset(signi, time < 18.1)
 signi <- subset(signi, time > 5.9)
-head(newdat)
+signi1 <- signi
+signi <- newdat
+signi <- subset(signi, time < 27.1)
+signi <- subset(signi, time > 21.9)
+signi2 <- signi
 
 # plot
 fut_time <- ggplot(fut_m, aes(x=time, y=LRR, size = sig, color = Treatment)) + 
   geom_hline(yintercept=0, linetype="dashed")+
   geom_point(position=position_dodge(0.05), size = 3, alpha = 0.8) +
   geom_line(data = newdat, aes(time, LLRmin), size = 1) +
-  geom_line(data = signi, aes(time, LLRmin), size = 2, color = "indianred1") +
+  geom_line(data = signi1, aes(time, LLRmin), size = 2, color = "indianred1") +
+  geom_line(data = signi2, aes(time, LLRmin), size = 2, color = "indianred1") +
   geom_line(data = newdat, aes(time, LLR_upr), size = .5, alpha = 0.8, linetype="dotted") +
   geom_line(data = newdat, aes(time, LLR_lwr), size = .5, alpha = 0.8, linetype="dotted") +
   plot.theme +
@@ -919,7 +924,6 @@ lines(upper ~ time, data = pdat, lty = "dashed")
 lines(lower ~ time, data = pdat, lty = "dashed")
 lines(unlist(m1.dsig$incr) ~ time, data = pdat, col = "blue", lwd = 3)
 lines(unlist(m1.dsig$decr) ~ time, data = pdat, col = "red", lwd = 3)
-# significant decrease from day 6 to 18
 
 ## Plot prettier for paper
 # Extract gam lines
@@ -935,7 +939,7 @@ signi <- subset(signi, time < 15.1)
 signi1 <- signi
 signi <- newdat
 signi <- subset(signi, time < 25.1)
-signi <- subset(signi, time > 19.9)
+signi <- subset(signi, time > 17.9)
 signi2 <- signi
 
 # plot
@@ -1002,7 +1006,7 @@ newdat$Treatment <- "AMB+HW"
 newdat_amb <- newdat
 
 ### FUT-HW
-m1 <- gam(LRR ~ s(time, k=4, fx= TRUE), data = hwf_m)
+m1 <- gam(LRR ~ s(time, k=3, fx= TRUE), data = hwf_m)
 m1$aic
 summary(m1)
 plot(m1, residuals = TRUE, pch = 19, cex = 0.75)
@@ -1073,7 +1077,7 @@ ggsave("Output/HP_HW_LRR_even.png", hw_time, height = 4, width = 8, dpi = 320)
 species <- phyloseq::tax_glom(ps_merged, "Species")
 df <- plot_bar(species, fill = "Species")
 df2 <- df$data
-species <- df2 %>% select(Sample, Species, Abundance, Treatment, time, replicate)
+species <- df2 %>% select(Sample, Class, Species, Abundance, Treatment, time, replicate)
 
 # Prepare dataframe for plotting
 species$Species[species$Abundance < 100] <- "Other"
@@ -1106,8 +1110,10 @@ species$Species <- sub("-", " ", species$Species)
 species$Species <- sub("1", "", species$Species)
 species$Species <- sub("-2", "", species$Species)
 
+species$Species[species$Class == "Syndiniales"] <- "Syndiniales"
+
 ## Classes of PR2 are spanning several taxonomic levels, rename to group
-colnames(species)[2] <- "Group"
+colnames(species)[3] <- "Group"
 
 ## Create color palette
 spe_pal <- qualpal(24, colorspace=list(h=c(0,360), s=c(0.3,1), l=c(0.2,0.8)))
