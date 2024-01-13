@@ -290,6 +290,7 @@ tax <- tax %>%
   mutate(Class = recode(Class, "Stramenopiles_XX" = 'Stramenopiles')) %>%
   mutate(Class = recode(Class, "Picozoa_X" = 'Picozoa')) %>%
   mutate(Class = recode(Class, "Telonemia_X" = 'Telonemia'))
+tax$Species[tax$Class == "Syndiniales"] <- "Syndiniales"
 
 unique(tax$Division)
 unique(tax$Class)
@@ -463,7 +464,7 @@ hw <- rbind(hwa_m, hwf_m)
 # After Gavin Simson
 
 ### FUT
-m1 <- gam(LRR ~ s(time, k=6, fx= TRUE), data = fut_m)
+m1 <- gam(LRR ~ s(time, k=5, fx= TRUE), data = fut_m)
 m1$aic # knot number to decrease aic value
 summary(m1)
 plot(m1, residuals = TRUE, pch = 19, cex = 0.75)
@@ -508,11 +509,11 @@ newdat$LLR_upr <- p2$fit + (1.96 * p2$se.fit)
 newdat$LLR_lwr <- p2$fit - (1.96 * p2$se.fit)
 newdat$Treatment <- "FUT"
 signi <- newdat
-signi <- subset(signi, time < 15.1)
+signi <- subset(signi, time < 18.1)
 signi1 <- signi
 signi <- newdat
-signi <- subset(signi, time < 27.1)
-signi <- subset(signi, time > 21.9)
+signi <- subset(signi, time < 25.1)
+signi <- subset(signi, time > 19.9)
 signi2 <- signi
 
 # plot
@@ -612,7 +613,6 @@ lines(upper ~ time, data = pdat, lty = "dashed")
 lines(lower ~ time, data = pdat, lty = "dashed")
 lines(unlist(m1.dsig$incr) ~ time, data = pdat, col = "blue", lwd = 3)
 lines(unlist(m1.dsig$decr) ~ time, data = pdat, col = "red", lwd = 3)
-# Decrease between day 20 and 25
 
 # Extract gam lines
 newdat <- data.frame(time=seq(8,27,0.1)) 
@@ -623,10 +623,6 @@ newdat$LLR_upr <- p2$fit + (1.96 * p2$se.fit)
 newdat$LLR_lwr <- p2$fit - (1.96 * p2$se.fit)
 newdat$Treatment <- "FUT+HW"
 newdat_fut_hw <- newdat
-signi <- newdat
-signi <- subset(signi, time < 25.1)
-signi <- subset(signi, time > 19.9)
-signi_fut_hw <- signi
 
 ## Plot both HW together
 hw_time <- ggplot(hw, aes(x=time, y=LRR, color = Treatment, shape = Treatment)) +
@@ -638,7 +634,6 @@ hw_time <- ggplot(hw, aes(x=time, y=LRR, color = Treatment, shape = Treatment)) 
   geom_line(data = newdat_amb, aes(time, LLR_upr), size = .5, alpha = 0.8, linetype="dotted") +
   geom_line(data = newdat_amb, aes(time, LLR_lwr), size = .5, alpha = 0.8, linetype="dotted") +
   geom_line(data = newdat_fut_hw, aes(time, LLRmin), size = 1) +
-  geom_line(data = signi_fut_hw, aes(time, LLRmin), size = 2, color = "firebrick1") +
   geom_line(data = newdat_fut_hw, aes(time, LLR_upr), size = .5, alpha = 0.8, linetype="dotted") +
   geom_line(data = newdat_fut_hw, aes(time, LLR_lwr), size = .5, alpha = 0.8, linetype="dotted") +
   plot.theme +
@@ -715,7 +710,7 @@ lines(upper ~ time, data = pdat, lty = "dashed")
 lines(lower ~ time, data = pdat, lty = "dashed")
 lines(unlist(m1.dsig$incr) ~ time, data = pdat, col = "blue", lwd = 3)
 lines(unlist(m1.dsig$decr) ~ time, data = pdat, col = "red", lwd = 3)
-# significant decrease from day 6 to 18 and increase from day 22 to 27
+# significant decrease from day 6 to 20
 
 ## Plot prettier for paper
 # Extract gam lines
@@ -727,21 +722,16 @@ newdat$LLR_upr <- p2$fit + (1.96 * p2$se.fit)
 newdat$LLR_lwr <- p2$fit - (1.96 * p2$se.fit)
 newdat$Treatment <- "FUT"
 signi <- newdat
-signi <- subset(signi, time < 18.1)
+signi <- subset(signi, time < 20.1)
 signi <- subset(signi, time > 5.9)
-signi1 <- signi
-signi <- newdat
-signi <- subset(signi, time < 27.1)
-signi <- subset(signi, time > 21.9)
-signi2 <- signi
+head(newdat)
 
 # plot
 fut_time <- ggplot(fut_m, aes(x=time, y=LRR, size = sig, color = Treatment)) + 
   geom_hline(yintercept=0, linetype="dashed")+
   geom_point(position=position_dodge(0.05), size = 3, alpha = 0.8) +
   geom_line(data = newdat, aes(time, LLRmin), size = 1) +
-  geom_line(data = signi1, aes(time, LLRmin), size = 2, color = "indianred1") +
-  geom_line(data = signi2, aes(time, LLRmin), size = 2, color = "indianred1") +
+  geom_line(data = signi, aes(time, LLRmin), size = 2, color = "indianred1") +
   geom_line(data = newdat, aes(time, LLR_upr), size = .5, alpha = 0.8, linetype="dotted") +
   geom_line(data = newdat, aes(time, LLR_lwr), size = .5, alpha = 0.8, linetype="dotted") +
   plot.theme +
@@ -800,7 +790,7 @@ newdat_amb <- newdat
 
 
 ### FUT-HW
-m1 <- gam(LRR ~ s(time, k=4, fx= TRUE), data = hwf_m)
+m1 <- gam(LRR ~ s(time, k=3, fx= TRUE), data = hwf_m)
 m1$aic
 summary(m1)
 plot(m1, residuals = TRUE, pch = 19, cex = 0.75)
@@ -930,6 +920,7 @@ lines(upper ~ time, data = pdat, lty = "dashed")
 lines(lower ~ time, data = pdat, lty = "dashed")
 lines(unlist(m1.dsig$incr) ~ time, data = pdat, col = "blue", lwd = 3)
 lines(unlist(m1.dsig$decr) ~ time, data = pdat, col = "red", lwd = 3)
+# significant decrease from day 6 to 18
 
 ## Plot prettier for paper
 # Extract gam lines
@@ -945,7 +936,7 @@ signi <- subset(signi, time < 15.1)
 signi1 <- signi
 signi <- newdat
 signi <- subset(signi, time < 25.1)
-signi <- subset(signi, time > 17.9)
+signi <- subset(signi, time > 19.9)
 signi2 <- signi
 
 # plot
@@ -1010,14 +1001,6 @@ newdat$LLR_upr <- p2$fit + (1.96 * p2$se.fit)
 newdat$LLR_lwr <- p2$fit - (1.96 * p2$se.fit)
 newdat$Treatment <- "AMB+HW"
 newdat_amb <- newdat
-signi <- newdat
-signi <- subset(signi, time < 18.1)
-signi <- subset(signi, time > 12.9)
-signi_amb1 <- signi
-signi <- newdat
-signi <- subset(signi, time < 27.1)
-signi <- subset(signi, time > 24.9)
-signi_amb2 <- signi
 
 ### FUT-HW
 m1 <- gam(LRR ~ s(time, k=4, fx= TRUE), data = hwf_m)
@@ -1063,11 +1046,6 @@ newdat$LLR_upr <- p2$fit + (1.96 * p2$se.fit)
 newdat$LLR_lwr <- p2$fit - (1.96 * p2$se.fit)
 newdat$Treatment <- "FUT+HW"
 newdat_fut_hw <- newdat
-signi <- newdat
-signi <- subset(signi, time < 25.1)
-signi <- subset(signi, time > 19.9)
-signi_fut_hw <- signi
-
 
 ## Plot both HW together
 hw_time <- ggplot(hw, aes(x=time, y=LRR, color = Treatment, shape = Treatment)) +
@@ -1076,12 +1054,9 @@ hw_time <- ggplot(hw, aes(x=time, y=LRR, color = Treatment, shape = Treatment)) 
   geom_hline(yintercept=0, linetype="dashed") +
   geom_point(position=position_dodge(0.05), size = 3, alpha = 0.8) +
   geom_line(data = newdat_amb, aes(time, LLRmin), size = 1) +
-  geom_line(data = signi_amb1, aes(time, LLRmin), size = 2, color = "royalblue1") +
-  geom_line(data = signi_amb2, aes(time, LLRmin), size = 2, color = "royalblue1") +
   geom_line(data = newdat_amb, aes(time, LLR_upr), size = .5, alpha = 0.8, linetype="dotted") +
   geom_line(data = newdat_amb, aes(time, LLR_lwr), size = .5, alpha = 0.8, linetype="dotted") +
   geom_line(data = newdat_fut_hw, aes(time, LLRmin), size = 1) +
-  geom_line(data = signi_fut_hw, aes(time, LLRmin), size = 2, color = "firebrick1") +
   geom_line(data = newdat_fut_hw, aes(time, LLR_upr), size = .5, alpha = 0.8, linetype="dotted") +
   geom_line(data = newdat_fut_hw, aes(time, LLR_lwr), size = .5, alpha = 0.8, linetype="dotted") +
   plot.theme +
@@ -1099,7 +1074,7 @@ ggsave("Output/HP_HW_LRR_even.png", hw_time, height = 4, width = 8, dpi = 320)
 species <- phyloseq::tax_glom(ps_merged, "Species")
 df <- plot_bar(species, fill = "Species")
 df2 <- df$data
-species <- df2 %>% select(Sample, Class, Species, Abundance, Treatment, time, replicate)
+species <- df2 %>% select(Sample, Species, Abundance, Treatment, time, replicate)
 
 # Prepare dataframe for plotting
 species$Species[species$Abundance < 100] <- "Other"
@@ -1132,10 +1107,8 @@ species$Species <- sub("-", " ", species$Species)
 species$Species <- sub("1", "", species$Species)
 species$Species <- sub("-2", "", species$Species)
 
-species$Species[species$Class == "Syndiniales"] <- "Syndiniales"
-
 ## Classes of PR2 are spanning several taxonomic levels, rename to group
-colnames(species)[3] <- "Group"
+colnames(species)[2] <- "Group"
 
 ## Create color palette
 spe_pal <- qualpal(24, colorspace=list(h=c(0,360), s=c(0.3,1), l=c(0.2,0.8)))
