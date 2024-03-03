@@ -40,7 +40,7 @@ bar.theme <- theme(panel.background = element_blank(),
                    strip.text = element_text(size = 15, face = "bold"),
                    strip.background = element_blank(), strip.placement = "outside",
                    text = element_text(size = 20, face = "bold"), legend.position = "right",
-                   legend.text = element_text())
+                   legend.text = element_text(face = "italic"))
 
 plot.theme <- theme(panel.background = element_blank(),
                     panel.border = element_rect(colour = "black", fill=NA, size=1),
@@ -239,7 +239,7 @@ asv <- asv[rowSums(asv)>0,]
 depths <- colSums(asv) # prepare df containing the sequencing depth
 plot(depths)
 min(depths)
-# looks okay, no incredeibly low numbers, so keep as it is
+# looks okay, no incredibly low numbers, so keep as it is
 
 # Match sam tab to new asv tab as some samples might have been removed in the last step
 sam <- sam[sam$sample_ID %in% colnames(asv),]
@@ -638,7 +638,7 @@ hw_time <- ggplot(hw, aes(x=time, y=LRR, color = Treatment, shape = Treatment)) 
   geom_line(data = newdat_amb, aes(time, LLR_upr), size = .5, alpha = 0.8, linetype="dotted") +
   geom_line(data = newdat_amb, aes(time, LLR_lwr), size = .5, alpha = 0.8, linetype="dotted") +
   geom_line(data = newdat_fut_hw, aes(time, LLRmin), size = 1) +
-  geom_line(data = signi_fut_hw, aes(time, LLRmin), size = 2, color = "firebrick1") +
+  geom_line(data = signi_fut_hw, aes(time, LLRmin), size = 3, color = "firebrick1") +
   geom_line(data = newdat_fut_hw, aes(time, LLR_upr), size = .5, alpha = 0.8, linetype="dotted") +
   geom_line(data = newdat_fut_hw, aes(time, LLR_lwr), size = .5, alpha = 0.8, linetype="dotted") +
   plot.theme +
@@ -1105,10 +1105,10 @@ species <- df2 %>% select(Sample, Class, Species, Abundance, Treatment, time, re
 species$Species[species$Abundance < 100] <- "Other"
 
 species <- species %>%
-  mutate(Treatment = recode(Treatment, 'RCP' = 'FUT')) %>%
-  mutate(Treatment = recode(Treatment, 'RCP+HW' = 'FUT+HW')) %>%
-  mutate(Treatment = recode(Treatment, 'Ambient' = 'AMB')) %>%
-  mutate(Treatment = recode(Treatment, 'Ambient+HW' = 'AMB+HW'))
+  mutate(Treatment = recode(Treatment, 'RCP' = 'ERCP 8.5')) %>%
+  mutate(Treatment = recode(Treatment, 'RCP+HW' = 'ERCP 8.5 HW')) %>%
+  mutate(Treatment = recode(Treatment, 'Ambient' = 'Ambient')) %>%
+  mutate(Treatment = recode(Treatment, 'Ambient+HW' = 'Ambient HW'))
 
 species$Species <- sub("_", " ", species$Species)
 species$Species <- sub("X_", "", species$Species)
@@ -1133,12 +1133,13 @@ species$Species <- sub("1", "", species$Species)
 species$Species <- sub("-2", "", species$Species)
 
 species$Species[species$Class == "Syndiniales"] <- "Syndiniales"
+species$Species[species$Species == "Gyrodiniumrale"] <- "Gyrodiniales"
 
 ## Classes of PR2 are spanning several taxonomic levels, rename to group
 colnames(species)[3] <- "Group"
 
 ## Create color palette
-spe_pal <- qualpal(24, colorspace=list(h=c(0,360), s=c(0.3,1), l=c(0.2,0.8)))
+spe_pal <- qualpal(27, colorspace=list(h=c(0,360), s=c(0.3,1), l=c(0.2,0.8)))
 
 ## Plotting
 species_plot <- ggplot(species, aes(fill = Group, x = time, y = Abundance)) +

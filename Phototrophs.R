@@ -1117,10 +1117,10 @@ species <- df2 %>% select(Sample, Species, Abundance, Treatment, time, replicate
 species$Species[species$Abundance < 100] <- "Other"
 
 species <- species %>%
-  mutate(Treatment = recode(Treatment, 'RCP' = 'FUT')) %>%
-  mutate(Treatment = recode(Treatment, 'RCP+HW' = 'FUT+HW')) %>%
-  mutate(Treatment = recode(Treatment, 'Ambient' = 'AMB')) %>%
-  mutate(Treatment = recode(Treatment, 'Ambient+HW' = 'AMB+HW'))
+  mutate(Treatment = recode(Treatment, 'RCP' = 'ERCP 8.5')) %>%
+  mutate(Treatment = recode(Treatment, 'RCP+HW' = 'ERCP 8.5 HW')) %>%
+  mutate(Treatment = recode(Treatment, 'Ambient' = 'Ambient')) %>%
+  mutate(Treatment = recode(Treatment, 'Ambient+HW' = 'Ambient HW'))
 
 species$Species <- sub("_", " ", species$Species)
 species$Species <- sub("X_", "", species$Species)
@@ -1131,10 +1131,14 @@ species <- species %>%
   mutate(Species = recode(Species, "Dolichomastigaceae-B sp." = 'Dolichomastigaceae indet.')) %>%
   mutate(Species = recode(Species, "MOCH-3 sp." = 'Marine ochrophyte indet.')) %>%
   mutate(Species = recode(Species, "Prasino-Clade-VIII sp." = 'Prasino-Clade indet.')) %>%
+  mutate(Species = recode(Species, "Dino-Group-I-Clade-1 sp." = 'Dinophyceae sp.')) %>%
+  mutate(Species = recode(Species, "Dino-Group-I-Clade-3 sp." = 'Dinophyceae sp.')) %>%
+  mutate(Species = recode(Species, "Dino-Group-I-Clade-4 sp." = 'Dinophyceae sp.')) %>%
+  mutate(Species = recode(Species, "Dino-Group-II-Clade-10-and-11 sp." = 'Dinophyceae sp.')) %>%
   mutate(Species = recode(Species, "Micromonas commoda_A2" = 'Micromonas commoda'))
 
 ## Create color palette
-spe_pal <- qualpal(32, colorspace=list(h=c(0,360), s=c(0.3,1), l=c(0.2,0.8)))
+spe_pal <- qualpal(33, colorspace=list(h=c(0,360), s=c(0.3,1), l=c(0.2,0.8)))
 
 ## Plotting
 species_plot <- ggplot(species, aes(fill = Species, x = time, y = Abundance)) +
