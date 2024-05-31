@@ -1,6 +1,6 @@
 ### HNT22 mesocosms 18S rRNA metabarcoding data ###
 ### Autotrophic protists ###
-## Antonia Ahme, 07.12.2023 ##
+## Antonia Ahme, 28.05.2024 ##
 
 rm(list=ls())
 options(stringsAsFactors = F)
@@ -8,11 +8,12 @@ setwd("~/AWI/RProjects/HNT22") # Set to your own working directory
 
 set.seed(22)
 
-#### HOUSEKEEPING ####
+#### PACKAGES ####
 require(dplyr)
 require(tidyr)
 require(vegan)
 require(ggplot2)
+require(ggpattern)
 require(phyloseq)
 require(SRS)
 require(qualpalr)
@@ -23,11 +24,11 @@ require(nlme)
 
 #### FUNCTIONS & LAYOUTS ####
 treat_pal <- c("AMB+HW" = "royalblue2", "FUT" = "goldenrod2", "FUT+HW" = "firebrick1")
-treat_pal2 <- c("AMB" = "skyblue2", "AMB+HW" = "royalblue3", "FUT" = "goldenrod2", "FUT+HW" = "firebrick1")
+treat_pal2 <- c("AMB" = "skyblue2", "AMB+HW" = "royalblue2", "FUT" = "goldenrod2", "FUT+HW" = "firebrick1")
 treat_pch <- c(16,17)
 
 # Create the designs for plotting
-bar.theme <- theme(panel.background = element_blank(),
+bar.theme <- theme(panel.background = element_rect(fill='transparent'),
                    panel.border = element_blank(),
                    panel.grid = element_blank(),
                    axis.title.x = element_blank(),
@@ -40,21 +41,40 @@ bar.theme <- theme(panel.background = element_blank(),
                    strip.text = element_text(size = 15, face = "bold"),
                    strip.background = element_blank(), strip.placement = "outside",
                    text = element_text(size = 20, face = "bold"), legend.position = "right",
-                   legend.text = element_text(face = "italic"))
+                   legend.background = element_rect(fill='transparent'),
+                   legend.text = element_text(face = "italic"), 
+                   plot.background = element_rect(fill='transparent', color=NA))
 
-plot.theme <- theme(panel.background = element_blank(),
-                    panel.border = element_rect(colour = "black", fill=NA, size=1),
+plot.theme <- theme(panel.background = element_rect(fill='transparent'),
+                    panel.border = element_rect(fill=NA, size=1),
                     panel.grid = element_blank(),
-                    axis.title.x = element_text(size = 15, face= "bold"),
-                    axis.text.x = element_text(size = 15, face= "bold"),
+                    axis.title.x = element_text(size = 15),
+                    axis.text.x = element_text(colour = "black", size = 15),
                     axis.ticks.x = element_blank(),
-                    axis.title.y = element_text(size = 15, face= "bold"),
-                    axis.text.y = element_text(face="plain", color="black", size=15),
+                    axis.title.y = element_text(size = 15),
+                    axis.text.y = element_text(colour = "black", size=15),
                     axis.ticks.y = element_blank(),
-                    plot.title = element_text(size = 15, face= "bold"),
-                    strip.text = element_text(size = 15, face = "bold"),
+                    plot.title = element_text(size = 15),
+                    strip.text = element_text(size = 15),
                     strip.background = element_blank(), strip.placement = "outside",
-                    text = element_text(size = 15, face = "bold"), legend.position = "none")
+                    text = element_text(size = 15), legend.position = "none",
+                    plot.background = element_rect(fill='transparent', color=NA))
+
+plot.theme.inv <- theme(panel.background = element_rect(fill='transparent'),
+                    panel.border = element_rect(colour = "white", fill=NA, size=1),
+                    panel.grid = element_blank(),
+                    axis.title.x = element_text(colour = "white", size = 15),
+                    axis.text.x = element_text(colour = "white", size = 15),
+                    axis.ticks.x = element_blank(),
+                    axis.title.y = element_text(colour = "white", size = 15),
+                    axis.text.y = element_text(face="plain", color="white", size=15),
+                    axis.ticks.y = element_blank(),
+                    plot.title = element_text(colour = "white", size = 15),
+                    strip.text = element_text(colour = "white", size = 15),
+                    strip.background = element_blank(), strip.placement = "outside",
+                    text = element_text(colour = "white", size = 15),
+                    legend.position = "none",
+                    plot.background = element_rect(fill='transparent', color=NA))
 
 # Standard error and mean function
 se <- function(x, ...) sqrt(var(x, ...)/length(x))
@@ -71,8 +91,42 @@ data_summary <- function(data, varname, groupnames){
   return(data_sum)
 }
 
+# Function for hill numbers
+# by cora hörstmann
+diversity_iNEXT <- function(ASVTable){
+  suppressPackageStartupMessages(require("dplyr"))
+  suppressPackageStartupMessages(require("vegan"))
+  require(tidyr)
+  require(iNEXT)
+  require(devtools)
+  #install_github('AnneChao/iNEXT')
+  print(packageVersion("iNEXT"))
+  
+  
+  #library(dplyr)
+  
+  iNEXT_diversity = iNEXT::estimateD(ASVTable, q= c(0,1,2), datatype = "abundance", conf = 0.95, nboot = 10)
+  iNEXT_diversity_observed <- iNEXT_diversity[,c(1,4,6)]
+  iNEXT_diversity_observed$Order.q <- as.character(iNEXT_diversity_observed$Order.q)
+  iNEXT_diversity_observed <- spread(data =iNEXT_diversity_observed, key="Order.q", value="qD")
+  
+  iNEXT_diversity_observed = iNEXT_diversity_observed%>%
+    dplyr::rename(Richness = '0')%>%
+    dplyr::rename(Shannon = '1')%>%
+    dplyr::rename(Simpson = '2')
+  iNEXT_diversity_observed$sample_ID <- as.character(iNEXT_diversity_observed$Assemblage)
+  iNEXT_diversity_observed$Assemblage <- NULL
+  
+  iNEXT_diversity_observed <- as_tibble(iNEXT_diversity_observed)
+  
+  return(iNEXT_diversity_observed)
+  
+  detach("package:iNEXT", unload=TRUE)
+  detach("package:dplyr", unload=TRUE)
+}
+
 ## Functions for derivatives of GAM(M) models ##
-# by GAVIN SIMPSON             
+# by gavin simpson           
 Deriv <- function(mod, n = 200, eps = 1e-7, newdata, term) {
   if(inherits(mod, "gamm"))
     mod <- mod$gam
@@ -239,7 +293,7 @@ asv <- asv[rowSums(asv)>0,]
 depths <- colSums(asv) # prepare df containing the sequencing depth
 plot(depths)
 min(depths)
-# looks okay, no incredeibly low numbers, so keep as it is
+# looks okay, no incredibly low numbers, so keep as it is
 
 # Match sam tab to new asv tab as some samples might have been removed in the last step
 sam <- sam[sam$sample_ID %in% colnames(asv),]
@@ -306,6 +360,7 @@ tax <- filter(tax, tax$Division!="Rhodelphidia")
 tax <- filter(tax, tax$Division!="Perkinsea")
 tax <- filter(tax, tax$Division!="Opisthokonta_X")
 tax <- filter(tax, tax$Class!="Noctilucophyceae")
+tax <- filter(tax, tax$Class!="Syndiniales")
 tax <- filter(tax, tax$Genus!="Minorisa")
 tax <- filter(tax, tax$Family!="Amphisoleniaceae")
 tax <- filter(tax, tax$Genus!="Gyrodinium")
@@ -321,7 +376,6 @@ tax <- filter(tax, tax$Genus!="Protoperidinium")
 tax <- filter(tax, tax$Genus!="Qia")
 tax <- filter(tax, tax$Genus!="Protodinium")
 tax <- filter(tax, tax$Genus!="Stoeckeria")
-
 
 tax <- rbind(tax, tax_chlo)
 
@@ -374,15 +428,11 @@ rownames(newmetdat) <- rownames(otu_table(mps))
 sample_data(mps) <- newmetdat
 ps_merged <- mps
 
-#### CALCULATE DIVERSITY & PLOT OVERVIEW GRAPH SHANNON ####
-ps.rich <- microbial::richness(ps,  method = c("Observed", "Evenness", "Shannon"))
+#### CALCULATE DIVERSITY & PLOT OVERVIEW GRAPH OF HILL q = 1 (EXP(SHANNON)) ####
+## Calculate hill numbers 0 and 1 (richness and exp(shannon))
+div_iNEXT <- diversity_iNEXT(asv.srs)
 
-# Add diversity measures to sample tab
-sam$Richness <- ps.rich$Observed
-sam$Evenness <- ps.rich$Evenness
-sam$Shannon <- ps.rich$Shannon
-sam$sample_ID <- NULL
-sam$cosm <- NULL
+# Merge diversity and metadata
 sam$Treatment <- paste(sam$scenario, "-", sam$heatwave)
 sam <- sam %>%
   mutate(Treatment = recode(Treatment, 'ambient - no' = 'AMB')) %>%
@@ -392,37 +442,13 @@ sam <- sam %>%
 sam$Treatment <- as.factor(sam$Treatment)
 sam$time <- as.numeric(sam$time)
 
-### Prepare diversity analyses
-div <- sam
+div <- merge(div_iNEXT, sam)
 
-## Save diversity data as excel
-write_xlsx(div, "Data/Diversity_PP.xlsx")
+## Calculate and add pielous species evenness
+ps.even <- microbial::richness(ps,  method = c("Evenness"))
+rownames(div) <- div$sample_ID
+div$Evenness <- ps.even$Evenness
 
-# Shannon
-# Create summary of data for shannon indec
-div_shan <- data_summary(div, varname="Shannon", 
-                         groupnames=c("time", "Treatment"))
-
-shan_time <- ggplot(div_shan, aes(x=time, y=Shannon, color=Treatment)) + 
-  geom_rect(data=NULL,aes(xmin=9,xmax=17,ymin=-Inf,ymax=Inf),
-            fill="lightgoldenrod") +
-  geom_point(position=position_dodge(0.05), size = 3)+
-  geom_line(size = 1)+
-  geom_errorbar(aes(ymin=Shannon-se, ymax=Shannon+se), size=1.1, width=1,
-                position=position_dodge(0.05)) +
-  theme_classic() + theme(axis.line = element_blank(), 
-                          text = element_text(size = 16, color="black"), 
-                          axis.text.x = element_text(face="plain", color="black", size=16),
-                          axis.text.y = element_text(face="plain", color="black", size=16),
-                          panel.background = element_rect(colour = "black", size=1),
-                          legend.position=c(.1,.2)) +
-  labs(x="Incubation time (d)", y=bquote("Shannon index")) + 
-  scale_color_manual(values=treat_pal2)
-
-shan_time
-ggsave("Output/AllShannonOverTime_PP.png", shan_time, height = 5, width = 10, dpi = 320)
-
-#### CALCULATE & PLOT & ANALYSE SHANNON LRRs ####
 ## Create subsets for phases and groups of interest
 amb <- subset(div, heatwave == "no" & scenario == "ambient")
 fut <- subset(div, heatwave == "no" & scenario == "rcp")
@@ -430,6 +456,31 @@ hw_all <- subset(div, time > 7 & heatwave == "yes")
 hwa <- subset(hw_all, scenario == "ambient")
 hwf <- subset(hw_all, scenario == "rcp")
 
+# Save diversity data as excel
+write_xlsx(div, "Data/Diversity_PP.xlsx")
+
+## Plot
+# Create summary of data for hill q = 1
+div_q1 <- data_summary(div, varname="Shannon", 
+                         groupnames=c("time", "Treatment"))
+
+q1_time <- ggplot(div_q1, aes(x=time, y=Shannon, color=Treatment)) + 
+  geom_rect(data=NULL,aes(xmin=9,xmax=17,ymin=-Inf,ymax=Inf),
+            fill="lightgoldenrod") +
+  geom_point(position=position_dodge(0.05), size = 3)+
+  geom_line(size = 1)+
+  geom_errorbar(aes(ymin=Shannon-se, ymax=Shannon+se), size=1.1, width=1,
+                position=position_dodge(0.05)) +
+  plot.theme + theme(legend.position=c(.1,.2), legend.background = element_rect(fill='transparent')) +
+  labs(x="Incubation time (d)", y=bquote("Hill number (q = 1)")) +
+  scale_x_continuous(breaks = seq(0, 30, 3)) +
+  scale_y_continuous(breaks = seq(0, 40, 5)) +
+  scale_color_manual(values=treat_pal2)
+
+q1_time
+ggsave("Output/HillOverTime_PP.png", q1_time, height = 5, width = 10, dpi = 320)
+
+#### CALCULATE & PLOT & ANALYSE LRRs OF HILL q = 1 (EXP(SHANNON)) ####
 ## Calculate log response ratios
 ## FUT
 means_amb <- amb %>%
@@ -492,7 +543,7 @@ lines(upper ~ time, data = pdat, lty = "dashed")
 lines(lower ~ time, data = pdat, lty = "dashed")
 lines(unlist(m1.dsig$incr) ~ time, data = pdat, col = "blue", lwd = 3)
 lines(unlist(m1.dsig$decr) ~ time, data = pdat, col = "red", lwd = 3)
-# significant decrease from day 6 to 15 and increase from 22 to 27
+# significant decrease from day 6 to 15
 
 ## Plot prettier for paper
 # Extract gam lines
@@ -504,13 +555,8 @@ newdat$LLR_upr <- p2$fit + (1.96 * p2$se.fit)
 newdat$LLR_lwr <- p2$fit - (1.96 * p2$se.fit)
 newdat$Treatment <- "FUT"
 signi <- newdat
-signi <- subset(signi, time < 18.1)
+signi <- subset(signi, time < 15.1)
 signi <- subset(signi, time > 5.9)
-signi1 <- signi
-signi <- newdat
-signi <- subset(signi, time < 27.1)
-signi <- subset(signi, time > 22.9)
-signi2 <- signi
 
 head(newdat)
 
@@ -519,18 +565,17 @@ fut_time <- ggplot(fut_m, aes(x=time, y=LRR, size = sig, color = Treatment)) +
   geom_hline(yintercept=0, linetype="dashed")+
   geom_point(position=position_dodge(0.05), size = 3, alpha = 0.8) +
   geom_line(data = newdat, aes(time, LLRmin), size = 1) +
-  geom_line(data = signi1, aes(time, LLRmin), size = 2, color = "indianred1") +
-  geom_line(data = signi2, aes(time, LLRmin), size = 2, color = "indianred1") +
+  geom_line(data = signi, aes(time, LLRmin), size = 2, color = "indianred1") +
   geom_line(data = newdat, aes(time, LLR_upr), size = .5, alpha = 0.8, linetype="dotted") +
   geom_line(data = newdat, aes(time, LLR_lwr), size = .5, alpha = 0.8, linetype="dotted") +
   plot.theme +
-  labs(x="Incubation time (d)", y=bquote("LRR")) + 
+  labs(x="Incubation time (d)", y=bquote("LRR (Hill q = 1)")) + 
   scale_color_manual(values=treat_pal) +
-  coord_cartesian(ylim = c(-0.5, 0.3)) +
+  coord_cartesian(ylim = c(-1, 1)) +
   scale_x_continuous(breaks = seq(0, 27, 3))
   
 fut_time
-ggsave("Output/PP_FUT_LRR.png", fut_time, height = 4, width = 8, dpi = 320)
+ggsave("Output/PP_FUT_LRR.png", fut_time, height = 4, width = 8, dpi = 320, bg = "transparent")
 
 
 ### AMB-HW
@@ -641,26 +686,29 @@ hw_time <- ggplot(hw, aes(x=time, y=LRR, color = Treatment, shape = Treatment)) 
   geom_hline(yintercept=0, linetype="dashed") +
   geom_point(position=position_dodge(0.05), size = 3, alpha = 0.8) +
   geom_line(data = newdat_amb, aes(time, LLRmin), size = 1) +
-  geom_line(data = signi_amb1, aes(time, LLRmin), size = 3, color = "royalblue1") +
-  geom_line(data = signi_amb2, aes(time, LLRmin), size = 3, color = "royalblue1") +
+  geom_line(data = signi_amb1, aes(time, LLRmin), size = 3, color = "royalblue2") +
+  geom_line(data = signi_amb1, aes(time, LLRmin), size = 3, color = "turquoise", linetype="dotted") +
+  geom_line(data = signi_amb2, aes(time, LLRmin), size = 3, color = "royalblue2") +
+  geom_line(data = signi_amb2, aes(time, LLRmin), size = 3, color = "turquoise", linetype="dotted") +
   geom_line(data = newdat_amb, aes(time, LLR_upr), size = .5, alpha = 0.8, linetype="dotted") +
   geom_line(data = newdat_amb, aes(time, LLR_lwr), size = .5, alpha = 0.8, linetype="dotted") +
   geom_line(data = newdat_fut_hw, aes(time, LLRmin), size = 1) +
   geom_line(data = signi_fut_hw, aes(time, LLRmin), size = 3, color = "firebrick1") +
+  geom_line(data = signi_fut_hw, aes(time, LLRmin), size = 3, color = "darkorange", linetype="dotted") +
   geom_line(data = newdat_fut_hw, aes(time, LLR_upr), size = .5, alpha = 0.8, linetype="dotted") +
   geom_line(data = newdat_fut_hw, aes(time, LLR_lwr), size = .5, alpha = 0.8, linetype="dotted") +
   plot.theme +
-  labs(x="Incubation time (d)", y=bquote("LRR")) + 
+  labs(x="Incubation time (d)", y=bquote("LRR (Hill q = 1)")) + 
   scale_color_manual(values=treat_pal) +
   scale_shape_manual(values=treat_pch) +
-  coord_cartesian(ylim = c(-0.5, 0.3)) +
+  coord_cartesian(ylim = c(-1, 1)) +
   scale_x_continuous(breaks = seq(0, 27, 3))
 
 hw_time
-ggsave("Output/PP_HW_LRR.png", hw_time, height = 4, width = 8, dpi = 320)
+ggsave("Output/PP_HW_LRR.png", hw_time, height = 4, width = 8, dpi = 320, bg = "transparent")
 
 
-#### CALCULATE & PLOT & ANALYSE RICHNESS LRRs ####
+#### CALCULATE & PLOT & ANALYSE LRRs OF HILL q = 0 (RICHNESS) ####
 ## Calculate log response ratios
 ## FUT
 means_amb <- amb %>%
@@ -690,7 +738,7 @@ hw <- rbind(hwa_m, hwf_m)
 # After Gavin Simson
 
 ### FUT
-m1 <- gam(LRR ~ s(time, k=3, fx= TRUE), data = fut_m)
+m1 <- gam(LRR ~ s(time, k=5, fx= TRUE), data = fut_m)
 m1$aic # knot number to decrease aic value
 summary(m1)
 plot(m1, residuals = TRUE, pch = 19, cex = 0.75)
@@ -723,7 +771,7 @@ lines(upper ~ time, data = pdat, lty = "dashed")
 lines(lower ~ time, data = pdat, lty = "dashed")
 lines(unlist(m1.dsig$incr) ~ time, data = pdat, col = "blue", lwd = 3)
 lines(unlist(m1.dsig$decr) ~ time, data = pdat, col = "red", lwd = 3)
-# significant decrease from day 0 to 15
+# significant decrease from day 6 to 15
 
 ## Plot prettier for paper
 # Extract gam lines
@@ -736,6 +784,7 @@ newdat$LLR_lwr <- p2$fit - (1.96 * p2$se.fit)
 newdat$Treatment <- "FUT"
 signi <- newdat
 signi <- subset(signi, time < 15.1)
+signi <- subset(signi, time > 5.9)
 
 # plot
 fut_time <- ggplot(fut_m, aes(x=time, y=LRR, size = sig, color = Treatment)) + 
@@ -746,17 +795,17 @@ fut_time <- ggplot(fut_m, aes(x=time, y=LRR, size = sig, color = Treatment)) +
   geom_line(data = newdat, aes(time, LLR_upr), size = .5, alpha = 0.8, linetype="dotted") +
   geom_line(data = newdat, aes(time, LLR_lwr), size = .5, alpha = 0.8, linetype="dotted") +
   plot.theme +
-  labs(x="Incubation time (d)", y=bquote("LRR")) + 
+  labs(x="Incubation time (d)", y=bquote("LRR (Hill q = 0)")) + 
   scale_color_manual(values=treat_pal) +
-  coord_cartesian(ylim = c(-0.5, 0.3)) +
+  coord_cartesian(ylim = c(-1, 1)) +
   scale_x_continuous(breaks = seq(0, 27, 3))
 
 fut_time
-ggsave("Output/PP_FUT_LRR_rich.png", fut_time, height = 4, width = 8, dpi = 320)
+ggsave("Output/PP_FUT_LRR_rich.png", fut_time, height = 4, width = 8, dpi = 320, bg = "transparent")
 
 
 ### AMB-HW
-m1 <- gam(LRR ~ s(time, k=5, fx= TRUE), data = hwa_m)
+m1 <- gam(LRR ~ s(time, k=6, fx= TRUE), data = hwa_m)
 m1$aic
 summary(m1)
 plot(m1, residuals = TRUE, pch = 19, cex = 0.75)
@@ -860,24 +909,26 @@ hw_time <- ggplot(hw, aes(x=time, y=LRR, color = Treatment, shape = Treatment)) 
   geom_point(position=position_dodge(0.05), size = 3, alpha = 0.8) +
   geom_line(data = newdat_amb, aes(time, LLRmin), size = 1) +
   geom_line(data = signi_amb1, aes(time, LLRmin), size = 3, color = "royalblue1") +
+  geom_line(data = signi_amb1, aes(time, LLRmin), size = 3, color = "turquoise", linetype="dotted") +
   geom_line(data = newdat_amb, aes(time, LLR_upr), size = .5, alpha = 0.8, linetype="dotted") +
   geom_line(data = newdat_amb, aes(time, LLR_lwr), size = .5, alpha = 0.8, linetype="dotted") +
   geom_line(data = newdat_fut_hw, aes(time, LLRmin), size = 1) +
   geom_line(data = signi_fut_hw, aes(time, LLRmin), size = 3, color = "firebrick1") +
+  geom_line(data = signi_fut_hw, aes(time, LLRmin), size = 3, color = "darkorange", linetype="dotted") +
   geom_line(data = newdat_fut_hw, aes(time, LLR_upr), size = .5, alpha = 0.8, linetype="dotted") +
   geom_line(data = newdat_fut_hw, aes(time, LLR_lwr), size = .5, alpha = 0.8, linetype="dotted") +
   plot.theme +
-  labs(x="Incubation time (d)", y=bquote("LRR")) + 
+  labs(x="Incubation time (d)", y=bquote("LRR (Hill q = 0)")) + 
   scale_color_manual(values=treat_pal) +
   scale_shape_manual(values=treat_pch) +
-  coord_cartesian(ylim = c(-0.5, 0.3)) +
+  coord_cartesian(ylim = c(-1, 1)) +
   scale_x_continuous(breaks = seq(0, 27, 3))
 
 hw_time
-ggsave("Output/PP_HW_LRR_rich.png", hw_time, height = 4, width = 8, dpi = 320)
+ggsave("Output/PP_HW_LRR_rich.png", hw_time, height = 4, width = 8, dpi = 320, bg = "transparent")
 
 
-#### CALCULATE & PLOT & ANALYSE EVENNESS LRRs ####
+#### CALCULATE & PLOT & ANALYSE LRRs OF PIELOUS EVENNESS ####
 ## Calculate log response ratios
 ## FUT
 means_amb <- amb %>%
@@ -970,13 +1021,13 @@ fut_time <- ggplot(fut_m, aes(x=time, y=LRR, size = sig, color = Treatment)) +
   geom_line(data = newdat, aes(time, LLR_upr), size = .5, alpha = 0.8, linetype="dotted") +
   geom_line(data = newdat, aes(time, LLR_lwr), size = .5, alpha = 0.8, linetype="dotted") +
   plot.theme +
-  labs(x="Incubation time (d)", y=bquote("LRR")) + 
+  labs(x="Incubation time (d)", y=bquote("LRR (Pielou's Evenness)")) + 
   scale_color_manual(values=treat_pal) +
-  coord_cartesian(ylim = c(-0.5, 0.3)) +
+  coord_cartesian(ylim = c(-1, 1)) +
   scale_x_continuous(breaks = seq(0, 27, 3))
 
 fut_time
-ggsave("Output/PP_FUT_LRR_even.png", fut_time, height = 4, width = 8, dpi = 320)
+ggsave("Output/PP_FUT_LRR_even.png", fut_time, height = 4, width = 8, dpi = 320, bg = "transparent")
 
 
 ### AMB-HW
@@ -1096,14 +1147,14 @@ hw_time <- ggplot(hw, aes(x=time, y=LRR, color = Treatment, shape = Treatment)) 
   geom_line(data = newdat_fut_hw, aes(time, LLR_upr), size = .5, alpha = 0.8, linetype="dotted") +
   geom_line(data = newdat_fut_hw, aes(time, LLR_lwr), size = .5, alpha = 0.8, linetype="dotted") +
   plot.theme +
-  labs(x="Incubation time (d)", y=bquote("LRR")) + 
+  labs(x="Incubation time (d)", y=bquote("LRR (Pielou's Evenness)")) + 
   scale_color_manual(values=treat_pal) +
   scale_shape_manual(values=treat_pch) +
-  coord_cartesian(ylim = c(-0.5, 0.3)) +
+  coord_cartesian(ylim = c(-1, 1)) +
   scale_x_continuous(breaks = seq(0, 27, 3))
 
 hw_time
-ggsave("Output/PP_HW_LRR_even.png", hw_time, height = 4, width = 8, dpi = 320)
+ggsave("Output/PP_HW_LRR_even.png", hw_time, height = 4, width = 8, dpi = 320, bg = "transparent")
 
 
 #### BARGRAPHS SPECIES LEVEL ####
@@ -1138,7 +1189,7 @@ species <- species %>%
   mutate(Species = recode(Species, "Micromonas commoda_A2" = 'Micromonas commoda'))
 
 ## Create color palette
-spe_pal <- qualpal(33, colorspace=list(h=c(0,360), s=c(0.3,1), l=c(0.2,0.8)))
+spe_pal <- qualpal(32, colorspace=list(h=c(0,360), s=c(0.3,1), l=c(0.2,0.8)))
 
 ## Plotting
 species_plot <- ggplot(species, aes(fill = Species, x = time, y = Abundance)) +
@@ -1148,7 +1199,7 @@ species_plot <- ggplot(species, aes(fill = Species, x = time, y = Abundance)) +
   scale_fill_manual(values = spe_pal$hex)
 
 species_plot
-ggsave("Output/PPSpecies.png", species_plot, height = 8, width = 14, dpi = 320)
+ggsave("Output/PPSpecies.png", species_plot, height = 8, width = 14, dpi = 320, bg = "transparent")
 
 #### PACKAGES ####
 ## Check which packages you actually used for documentation and tidying purposes
