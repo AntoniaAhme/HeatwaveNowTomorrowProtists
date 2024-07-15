@@ -4,7 +4,7 @@
 
 rm(list=ls())
 options(stringsAsFactors = F)
-setwd("~/AWI/RProjects/HNT22") # Set to your own working directory
+setwd("~/Documents/RProjects/HNT22") # Set to your own working directory
 
 set.seed(22)
 
@@ -16,6 +16,7 @@ require(ggplot2)
 require(ggpattern)
 require(phyloseq)
 require(SRS)
+require(microViz)
 require(qualpalr)
 require(writexl)
 require(rstatix)
@@ -23,24 +24,24 @@ require(mgcv)
 require(nlme)
 
 #### FUNCTIONS & LAYOUTS ####
-treat_pal <- c("AMB+HW" = "royalblue2", "FUT" = "goldenrod2", "FUT+HW" = "firebrick1")
-treat_pal2 <- c("AMB" = "skyblue2", "AMB+HW" = "royalblue2", "FUT" = "goldenrod2", "FUT+HW" = "firebrick1")
-treat_pch <- c(16,17)
+treat_pal <- c("Ambient HW" = "royalblue2", "ERCP 8.5" = "goldenrod2", "ERCP 8.5 HW" = "firebrick1")
+treat_pal2 <- c("Ambient" = "skyblue2", "Ambient HW" = "royalblue2", "ERCP 8.5" = "goldenrod2", "ERCP 8.5 HW" = "firebrick1")
+treat_pch <- c(16,17,18)
 
 # Create the designs for plotting
 bar.theme <- theme(panel.background = element_rect(fill='transparent'),
                    panel.border = element_blank(),
                    panel.grid = element_blank(),
                    axis.title.x = element_blank(),
-                   axis.text.x = element_text(size = 20, face = "bold"),
+                   axis.text.x = element_text(size = 10),
                    axis.ticks.x = element_blank(),
                    axis.title.y = element_blank(),
                    axis.text.y = element_blank(),
                    axis.ticks.y = element_blank(),
                    plot.title = element_blank(),
-                   strip.text = element_text(size = 15, face = "bold"),
+                   strip.text = element_text(size = 15),
                    strip.background = element_blank(), strip.placement = "outside",
-                   text = element_text(size = 20, face = "bold"), legend.position = "right",
+                   text = element_text(size = 15), legend.position = "right",
                    legend.background = element_rect(fill='transparent'),
                    legend.text = element_text(face = "italic"), 
                    plot.background = element_rect(fill='transparent', color=NA))
@@ -284,6 +285,11 @@ tax <- read.delim('Data/Taxonomy.txt')
 sam <- read.delim('Data/Samples.txt')
 sam$sample_ID <- sub("HNT22-euk-", "", sam$sample_ID)
 sam$sample_ID <- as.factor(sam$sample_ID)
+sam <- sam %>%
+  mutate(Treatment = recode(Treatment, 'RCP' = 'ERCP 8.5')) %>%
+  mutate(Treatment = recode(Treatment, 'RCP+HW' = 'ERCP 8.5 HW')) %>%
+  mutate(Treatment = recode(Treatment, 'Ambient' = 'Ambient')) %>%
+  mutate(Treatment = recode(Treatment, 'Ambient+HW' = 'Ambient HW'))
 
 #### PREPARE DATA FOR PLOTTING ####
 # Remove ASVs that don't occur in the dataset
@@ -433,12 +439,6 @@ ps_merged <- mps
 div_iNEXT <- diversity_iNEXT(asv.srs)
 
 # Merge diversity and metadata
-sam$Treatment <- paste(sam$scenario, "-", sam$heatwave)
-sam <- sam %>%
-  mutate(Treatment = recode(Treatment, 'ambient - no' = 'AMB')) %>%
-  mutate(Treatment = recode(Treatment, 'ambient - yes' = 'AMB+HW')) %>%
-  mutate(Treatment = recode(Treatment, 'rcp - no' = 'FUT')) %>%
-  mutate(Treatment = recode(Treatment, 'rcp - yes' = 'FUT+HW'))
 sam$Treatment <- as.factor(sam$Treatment)
 sam$time <- as.numeric(sam$time)
 
@@ -553,19 +553,21 @@ newdat$LLRmin <- p2$fit
 newdat$LLRmin_se <- p2$se.fit
 newdat$LLR_upr <- p2$fit + (1.96 * p2$se.fit)
 newdat$LLR_lwr <- p2$fit - (1.96 * p2$se.fit)
-newdat$Treatment <- "FUT"
+newdat$Treatment <- "ERCP 8.5"
 signi <- newdat
 signi <- subset(signi, time < 15.1)
 signi <- subset(signi, time > 5.9)
+signi2 <- newdat
+signi2 <- subset(signi2, time > 24.9)
 
-head(newdat)
 
 # plot
 fut_time <- ggplot(fut_m, aes(x=time, y=LRR, size = sig, color = Treatment)) + 
   geom_hline(yintercept=0, linetype="dashed")+
   geom_point(position=position_dodge(0.05), size = 3, alpha = 0.8) +
   geom_line(data = newdat, aes(time, LLRmin), size = 1) +
-  geom_line(data = signi, aes(time, LLRmin), size = 2, color = "indianred1") +
+  geom_line(data = signi, aes(time, LLRmin), size = 3, color = "indianred1") +
+  geom_line(data = signi2, aes(time, LLRmin), size = 3, color = "indianred1") + 
   geom_line(data = newdat, aes(time, LLR_upr), size = .5, alpha = 0.8, linetype="dotted") +
   geom_line(data = newdat, aes(time, LLR_lwr), size = .5, alpha = 0.8, linetype="dotted") +
   plot.theme +
@@ -619,7 +621,7 @@ newdat$LLRmin <- p2$fit
 newdat$LLRmin_se <- p2$se.fit
 newdat$LLR_upr <- p2$fit + (1.96 * p2$se.fit)
 newdat$LLR_lwr <- p2$fit - (1.96 * p2$se.fit)
-newdat$Treatment <- "AMB+HW"
+newdat$Treatment <- "Ambient HW"
 signi <- newdat
 signi <- subset(signi, time < 15.1)
 signi <- subset(signi, time > 10.9)
@@ -672,7 +674,7 @@ newdat$LLRmin <- p2$fit
 newdat$LLRmin_se <- p2$se.fit
 newdat$LLR_upr <- p2$fit + (1.96 * p2$se.fit)
 newdat$LLR_lwr <- p2$fit - (1.96 * p2$se.fit)
-newdat$Treatment <- "FUT+HW"
+newdat$Treatment <- "ERCP 8.5 HW"
 signi <- newdat
 signi <- subset(signi, time < 18.1)
 signi <- subset(signi, time > 12.9)
@@ -738,7 +740,7 @@ hw <- rbind(hwa_m, hwf_m)
 # After Gavin Simson
 
 ### FUT
-m1 <- gam(LRR ~ s(time, k=5, fx= TRUE), data = fut_m)
+m1 <- gam(LRR ~ s(time, k=3, fx= TRUE), data = fut_m)
 m1$aic # knot number to decrease aic value
 summary(m1)
 plot(m1, residuals = TRUE, pch = 19, cex = 0.75)
@@ -781,17 +783,16 @@ newdat$LLRmin <- p2$fit
 newdat$LLRmin_se <- p2$se.fit
 newdat$LLR_upr <- p2$fit + (1.96 * p2$se.fit)
 newdat$LLR_lwr <- p2$fit - (1.96 * p2$se.fit)
-newdat$Treatment <- "FUT"
+newdat$Treatment <- "ERCP 8.5"
 signi <- newdat
 signi <- subset(signi, time < 15.1)
-signi <- subset(signi, time > 5.9)
 
 # plot
 fut_time <- ggplot(fut_m, aes(x=time, y=LRR, size = sig, color = Treatment)) + 
   geom_hline(yintercept=0, linetype="dashed")+
   geom_point(position=position_dodge(0.05), size = 3, alpha = 0.8) +
   geom_line(data = newdat, aes(time, LLRmin), size = 1) +
-  geom_line(data = signi, aes(time, LLRmin), size = 2, color = "indianred1") +
+  geom_line(data = signi, aes(time, LLRmin), size = 3, color = "indianred1") +
   geom_line(data = newdat, aes(time, LLR_upr), size = .5, alpha = 0.8, linetype="dotted") +
   geom_line(data = newdat, aes(time, LLR_lwr), size = .5, alpha = 0.8, linetype="dotted") +
   plot.theme +
@@ -845,7 +846,7 @@ newdat$LLRmin <- p2$fit
 newdat$LLRmin_se <- p2$se.fit
 newdat$LLR_upr <- p2$fit + (1.96 * p2$se.fit)
 newdat$LLR_lwr <- p2$fit - (1.96 * p2$se.fit)
-newdat$Treatment <- "AMB+HW"
+newdat$Treatment <- "Ambient HW"
 signi <- newdat
 signi <- subset(signi, time < 15.1)
 signi <- subset(signi, time > 10.9)
@@ -894,10 +895,10 @@ newdat$LLRmin <- p2$fit
 newdat$LLRmin_se <- p2$se.fit
 newdat$LLR_upr <- p2$fit + (1.96 * p2$se.fit)
 newdat$LLR_lwr <- p2$fit - (1.96 * p2$se.fit)
-newdat$Treatment <- "FUT+HW"
+newdat$Treatment <- "ERCP 8.5 HW"
 signi <- newdat
 signi <- subset(signi, time < 27.1)
-signi <- subset(signi, time > 24.9)
+signi <- subset(signi, time > 21.9)
 newdat_fut_hw <- newdat
 signi_fut_hw <- signi
 
@@ -1001,7 +1002,7 @@ newdat$LLRmin <- p2$fit
 newdat$LLRmin_se <- p2$se.fit
 newdat$LLR_upr <- p2$fit + (1.96 * p2$se.fit)
 newdat$LLR_lwr <- p2$fit - (1.96 * p2$se.fit)
-newdat$Treatment <- "FUT"
+newdat$Treatment <- "ERCP 8.5"
 signi <- newdat
 signi <- subset(signi, time < 15.1)
 signi <- subset(signi, time > 5.9)
@@ -1016,8 +1017,8 @@ fut_time <- ggplot(fut_m, aes(x=time, y=LRR, size = sig, color = Treatment)) +
   geom_hline(yintercept=0, linetype="dashed")+
   geom_point(position=position_dodge(0.05), size = 3, alpha = 0.8) +
   geom_line(data = newdat, aes(time, LLRmin), size = 1) +
-  geom_line(data = signi1, aes(time, LLRmin), size = 2, color = "indianred1") +
-  geom_line(data = signi2, aes(time, LLRmin), size = 2, color = "indianred1") +
+  geom_line(data = signi1, aes(time, LLRmin), size = 3, color = "indianred1") +
+  geom_line(data = signi2, aes(time, LLRmin), size = 3, color = "indianred1") +
   geom_line(data = newdat, aes(time, LLR_upr), size = .5, alpha = 0.8, linetype="dotted") +
   geom_line(data = newdat, aes(time, LLR_lwr), size = .5, alpha = 0.8, linetype="dotted") +
   plot.theme +
@@ -1071,7 +1072,7 @@ newdat$LLRmin <- p2$fit
 newdat$LLRmin_se <- p2$se.fit
 newdat$LLR_upr <- p2$fit + (1.96 * p2$se.fit)
 newdat$LLR_lwr <- p2$fit - (1.96 * p2$se.fit)
-newdat$Treatment <- "AMB+HW"
+newdat$Treatment <- "Ambient HW"
 signi <- newdat
 signi <- subset(signi, time < 15.1)
 signi <- subset(signi, time > 10.9)
@@ -1124,7 +1125,7 @@ newdat$LLRmin <- p2$fit
 newdat$LLRmin_se <- p2$se.fit
 newdat$LLR_upr <- p2$fit + (1.96 * p2$se.fit)
 newdat$LLR_lwr <- p2$fit - (1.96 * p2$se.fit)
-newdat$Treatment <- "FUT+HW"
+newdat$Treatment <- "ERCP HW"
 signi <- newdat
 signi <- subset(signi, time < 18.1)
 signi <- subset(signi, time > 12.9)
@@ -1167,12 +1168,6 @@ species <- df2 %>% select(Sample, Species, Abundance, Treatment, time, replicate
 # Prepare dataframe for plotting
 species$Species[species$Abundance < 100] <- "Other"
 
-species <- species %>%
-  mutate(Treatment = recode(Treatment, 'RCP' = 'ERCP 8.5')) %>%
-  mutate(Treatment = recode(Treatment, 'RCP+HW' = 'ERCP 8.5 HW')) %>%
-  mutate(Treatment = recode(Treatment, 'Ambient' = 'Ambient')) %>%
-  mutate(Treatment = recode(Treatment, 'Ambient+HW' = 'Ambient HW'))
-
 species$Species <- sub("_", " ", species$Species)
 species$Species <- sub("X_", "", species$Species)
 species$Species <- sub("XXX_", "", species$Species)
@@ -1188,18 +1183,58 @@ species <- species %>%
   mutate(Species = recode(Species, "Dino-Group-II-Clade-10-and-11 sp." = 'Dinophyceae sp.')) %>%
   mutate(Species = recode(Species, "Micromonas commoda_A2" = 'Micromonas commoda'))
 
+## Reorder the Species for their mean abundance and remove missing values
+species %>%
+  # Sum abundance values, to only keep one per point
+  dplyr::group_by(Treatment, time, Species) %>% 
+  dplyr::summarise(abundance=sum(Abundance)) %>%
+  ungroup() %>%
+  # Replace missing values by 0
+  spread(key=Species, value=abundance) %>%
+  gather(key=Species, value=abundance, -c(Treatment, time)) %>%
+  replace_na(list(abundance=0)) -> species
+
+species <- species %>%
+  dplyr::group_by(Treatment, Species) %>%
+  dplyr::mutate(Mean = mean(abundance)) %>%
+  as.data.frame()
+
+species$Species <- factor(species$Species, levels = unique(species$Species[order(species$Mean)]))
+
+# Put "other" on top for prettier plotting
+new_levels <- c("Other", levels(species$Species)[levels(species$Species) != "Other"])
+species$Species <- factor(species$Species, levels = new_levels)
+
 ## Create color palette
-spe_pal <- qualpal(32, colorspace=list(h=c(0,360), s=c(0.3,1), l=c(0.2,0.8)))
+spe_pal <- qualpal(33, colorspace=list(h=c(0,360), s=c(0.3,1), l=c(0.2,0.8)))
+spe_pal <- spe_pal$hex
+spe_pal[1] <- "grey96"
 
 ## Plotting
-species_plot <- ggplot(species, aes(fill = Species, x = time, y = Abundance)) +
+species_plot <-  ggplot(species, aes(fill = Species, x = time, y = abundance)) +
   facet_wrap(~ Treatment, ncol = 2) +
-  geom_bar(position = "stack", stat = "identity") +
+  geom_area(stat= "identity") +
   bar.theme +
-  scale_fill_manual(values = spe_pal$hex)
+  scale_x_continuous(breaks = seq(0, 27, 3)) +
+  scale_fill_manual(values = spe_pal)
 
 species_plot
 ggsave("Output/PPSpecies.png", species_plot, height = 8, width = 14, dpi = 320, bg = "transparent")
+
+#### CREATE PCoA OF FIELD VS. EXP DATA ####
+## Ordinate
+ordi_aitch <- ps %>%
+  dist_calc("aitchison") %>%
+  ord_calc() %>%
+  ord_plot(shape = "time", size = 2, colour = "Treatment") +
+  scale_color_manual(values = treat_pal2) +
+  scale_shape_manual(values=1:nlevels(factor(sam$time))) +
+  ggforce::geom_mark_ellipse(aes(color = time))
+
+ordi_aitch
+
+## Save
+ggsave("Output/OrdinationOverTime.png", ordi_aitch, dpi = 300, width = 8, height = 6)
 
 #### PACKAGES ####
 ## Check which packages you actually used for documentation and tidying purposes
